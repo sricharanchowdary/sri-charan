@@ -1,0 +1,51 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { projects, site } from '../../data/site';
+
+export function getStaticPaths() {
+  return projects.map((project) => ({
+    params: { slug: project.slug },
+    props: { project },
+  }));
+}
+
+const { project } = Astro.props;
+---
+<BaseLayout title={`${project.title} - ${site.name}`} description={project.summary}>
+  <article class="mx-auto max-w-3xl">
+    <a href="/projects" class="font-semibold text-[var(--accent)]">Back to projects</a>
+    <h1 class="mt-5 text-4xl font-bold leading-tight">{project.title}</h1>
+    <p class="mt-4 text-lg leading-8 text-[var(--muted)]">{project.summary}</p>
+
+    <div class="mt-6 flex flex-wrap gap-2">
+      {project.tech.map((tech) => (
+        <span class="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-sm font-medium">{tech}</span>
+      ))}
+    </div>
+
+    <div class="prose-content mt-10 space-y-8">
+      <section>
+        <h2>Problem</h2>
+        <p>{project.problem}</p>
+      </section>
+      <section>
+        <h2>Approach</h2>
+        <p>{project.approach}</p>
+      </section>
+      <section>
+        <h2>Outcome</h2>
+        <p>{project.outcome}</p>
+      </section>
+      <section>
+        <h2>What I would change next time</h2>
+        <p>{project.next}</p>
+      </section>
+    </div>
+
+    {project.repo && (
+      <a href={project.repo} class="mt-10 inline-block rounded-md border border-[var(--border)] px-5 py-3 font-semibold text-[var(--accent)] hover:bg-[var(--surface-muted)]">
+        View repository
+      </a>
+    )}
+  </article>
+</BaseLayout>

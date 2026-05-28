@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900" role="img" aria-labelledby="title desc">
+  <title id="title">Portfolio wireframes</title>
+  <desc id="desc">Desktop and mobile wireframes for home, project, and contact pages.</desc>
+  <rect width="1400" height="900" fill="#f8fafc"/>
+  <text x="48" y="64" font-family="Arial, sans-serif" font-size="32" font-weight="700" fill="#111827">Design wireframes</text>
+  <text x="48" y="100" font-family="Arial, sans-serif" font-size="18" fill="#4b5563">Home, project case study, and contact at desktop and mobile sizes</text>
+
+  <g transform="translate(48 140)">
+    <text x="0" y="-16" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#111827">Home desktop</text>
+    <rect width="360" height="250" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+    <rect x="20" y="20" width="320" height="24" rx="4" fill="#e2e8f0"/>
+    <rect x="20" y="72" width="180" height="22" rx="4" fill="#2563eb"/>
+    <rect x="20" y="108" width="290" height="12" rx="4" fill="#cbd5e1"/>
+    <rect x="20" y="130" width="250" height="12" rx="4" fill="#cbd5e1"/>
+    <rect x="20" y="166" width="90" height="34" rx="6" fill="#2563eb"/>
+    <rect x="120" y="166" width="90" height="34" rx="6" fill="#f97316"/>
+    <rect x="230" y="66" width="100" height="130" rx="8" fill="#bae6fd"/>
+  </g>
+
+  <g transform="translate(440 140)">
+    <text x="0" y="-16" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#111827">Project desktop</text>
+    <rect width="360" height="250" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+    <rect x="20" y="22" width="120" height="12" rx="4" fill="#2563eb"/>
+    <rect x="20" y="58" width="280" height="30" rx="4" fill="#111827"/>
+    <rect x="20" y="112" width="300" height="12" rx="4" fill="#cbd5e1"/>
+    <rect x="20" y="142" width="260" height="12" rx="4" fill="#cbd5e1"/>
+    <rect x="20" y="176" width="300" height="12" rx="4" fill="#cbd5e1"/>
+    <rect x="20" y="210" width="220" height="12" rx="4" fill="#cbd5e1"/>
+  </g>
+
+  <g transform="translate(832 140)">
+    <text x="0" y="-16" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#111827">Contact desktop</text>
+    <rect width="360" height="250" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+    <rect x="20" y="40" width="110" height="28" rx="4" fill="#111827"/>
+    <rect x="20" y="84" width="140" height="12" rx="4" fill="#cbd5e1"/>
+    <rect x="188" y="28" width="140" height="34" rx="5" fill="#e2e8f0"/>
+    <rect x="188" y="76" width="140" height="34" rx="5" fill="#e2e8f0"/>
+    <rect x="188" y="124" width="140" height="70" rx="5" fill="#e2e8f0"/>
+    <rect x="188" y="208" width="140" height="30" rx="5" fill="#2563eb"/>
+  </g>
+
+  <g transform="translate(48 500)">
+    <text x="0" y="-16" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#111827">Mobile views</text>
+    <g>
+      <rect width="150" height="280" rx="12" fill="#ffffff" stroke="#94a3b8"/>
+      <rect x="14" y="18" width="122" height="16" rx="4" fill="#e2e8f0"/>
+      <rect x="14" y="58" width="100" height="24" rx="4" fill="#2563eb"/>
+      <rect x="14" y="98" width="122" height="10" rx="4" fill="#cbd5e1"/>
+      <rect x="14" y="116" width="110" height="10" rx="4" fill="#cbd5e1"/>
+      <rect x="14" y="150" width="122" height="70" rx="7" fill="#bae6fd"/>
+      <rect x="14" y="238" width="58" height="24" rx="5" fill="#2563eb"/>
+    </g>
+    <g transform="translate(190 0)">
+      <rect width="150" height="280" rx="12" fill="#ffffff" stroke="#94a3b8"/>
+      <rect x="14" y="20" width="88" height="10" rx="4" fill="#2563eb"/>
+      <rect x="14" y="50" width="116" height="26" rx="4" fill="#111827"/>
+      <rect x="14" y="100" width="122" height="10" rx="4" fill="#cbd5e1"/>
+      <rect x="14" y="132" width="122" height="10" rx="4" fill="#cbd5e1"/>
+      <rect x="14" y="164" width="122" height="10" rx="4" fill="#cbd5e1"/>
+      <rect x="14" y="220" width="90" height="26" rx="5" fill="#f97316"/>
+    </g>
+    <g transform="translate(380 0)">
+      <rect width="150" height="280" rx="12" fill="#ffffff" stroke="#94a3b8"/>
+      <rect x="14" y="24" width="80" height="24" rx="4" fill="#111827"/>
+      <rect x="14" y="72" width="122" height="30" rx="5" fill="#e2e8f0"/>
+      <rect x="14" y="118" width="122" height="30" rx="5" fill="#e2e8f0"/>
+      <rect x="14" y="164" width="122" height="62" rx="5" fill="#e2e8f0"/>
+      <rect x="14" y="244" width="122" height="26" rx="5" fill="#2563eb"/>
+    </g>
+  </g>
+</svg>

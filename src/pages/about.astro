@@ -1,0 +1,56 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../data/site';
+---
+<BaseLayout title={`About - ${site.name}`} description="About Sri Charan, skills, interests, and engineering values.">
+  <section class="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+    <div>
+      <h1 class="text-4xl font-bold">About me</h1>
+      <p class="mt-4 text-[var(--muted)]">Student ID: {site.studentId}</p>
+    </div>
+    <div class="space-y-5 text-lg leading-8 text-[var(--muted)]">
+      <p>
+        I am Sri Charan, a Data Science and AI student who enjoys turning model
+        experiments into software that people can actually try, inspect, and
+        trust. My strongest interests are computer vision, deep learning, and
+        deployment workflows.
+      </p>
+      <p>
+        The project that shaped my current direction most was a diabetic
+        retinopathy classifier. It pushed me beyond "train a model" thinking and
+        into questions about data quality, explainability, and what a useful
+        prototype needs before anyone should rely on it.
+      </p>
+      <p>
+        I am still early in my career, so I value small, complete projects. This
+        portfolio is built the same way: planned, designed, implemented, tested,
+        deployed through automation, and documented with the compromises visible.
+      </p>
+    </div>
+  </section>
+
+  <section class="mt-14">
+    <h2 class="text-2xl font-bold">Skills</h2>
+    <div class="mt-6 grid gap-4 md:grid-cols-2">
+      {[
+        ['Languages', 'Python, TypeScript, JavaScript, SQL'],
+        ['AI and ML', 'TensorFlow, PyTorch, scikit-learn, OpenCV'],
+        ['Web', 'Astro, Tailwind CSS, HTML, accessible UI patterns'],
+        ['Tools', 'Git, Docker, Wrangler, GitHub Actions'],
+      ].map(([category, skills]) => (
+        <div class="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
+          <h3 class="font-bold text-[var(--accent)]">{category}</h3>
+          <p class="mt-2 text-[var(--muted)]">{skills}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="mt-14 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 print:border-0">
+    <h2 class="text-2xl font-bold">Resume snapshot</h2>
+    <p class="mt-3 text-[var(--muted)]">
+      Focus areas: machine learning prototypes, explainable AI, static sites,
+      Workers APIs, and disciplined project delivery.
+    </p>
+  </section>
+</BaseLayout>

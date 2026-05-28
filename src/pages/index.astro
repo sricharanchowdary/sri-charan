@@ -1,0 +1,76 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { posts, projects, site } from '../data/site';
+---
+<BaseLayout title={site.title} description={site.description}>
+  <section class="grid gap-10 py-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+    <div>
+      <p class="mb-4 text-sm font-semibold uppercase tracking-wide text-[var(--accent)]">Data Science and AI student</p>
+      <h1 class="max-w-3xl text-4xl font-bold leading-tight text-[var(--text)] sm:text-5xl lg:text-6xl">
+        I build practical machine learning and web systems with care.
+      </h1>
+      <p class="mt-6 max-w-2xl text-lg leading-8 text-[var(--muted)]">
+        I am Sri Charan, a junior software engineer focused on computer vision,
+        model deployment, and clear software habits: plan the work, keep the
+        interface usable, test the important paths, and document the trade-offs.
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href="/projects" class="rounded-md bg-[var(--accent)] px-5 py-3 font-semibold text-white hover:bg-[var(--accent-strong)]">View projects</a>
+        <a href="/contact" class="rounded-md border border-[var(--border)] px-5 py-3 font-semibold text-[var(--text)] hover:bg-[var(--surface-muted)]">Contact me</a>
+      </div>
+    </div>
+
+    <div class="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+      <img
+        src="/portfolio-hero.png"
+        alt="Illustrated engineering desk with a laptop, code blocks, and AI workflow sketches"
+        class="aspect-[4/3] w-full object-cover"
+        loading="eager"
+      />
+      <div class="p-5">
+      <p class="text-sm font-semibold uppercase tracking-wide text-[var(--muted)]">Current focus</p>
+      <div class="mt-4 space-y-4">
+        {['Deep learning pipelines', 'Cloudflare Workers', 'Accessible frontend UI', 'Testing and CI/CD'].map((item) => (
+          <div class="flex items-center gap-3 rounded-md bg-[var(--surface-muted)] px-4 py-3">
+            <span class="h-2.5 w-2.5 rounded-full bg-[var(--accent)]"></span>
+            <span class="font-medium">{item}</span>
+          </div>
+        ))}
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-12">
+    <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h2 class="text-2xl font-bold">Featured case studies</h2>
+        <p class="mt-2 text-[var(--muted)]">Each project is written as problem, approach, outcome, and what I would change.</p>
+      </div>
+      <a href="/projects" class="font-semibold text-[var(--accent)]">All projects</a>
+    </div>
+    <div class="grid gap-4 md:grid-cols-3">
+      {projects.map((project) => (
+        <article class="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
+          <h3 class="text-lg font-bold">{project.title}</h3>
+          <p class="mt-3 text-sm leading-6 text-[var(--muted)]">{project.summary}</p>
+          <a href={`/projects/${project.slug}`} class="mt-5 inline-block font-semibold text-[var(--accent)]">Read case study</a>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="border-t border-[var(--border)] py-12">
+    <h2 class="text-2xl font-bold">Latest writing</h2>
+    <div class="mt-6 grid gap-4 md:grid-cols-2">
+      {posts.map((post) => (
+        <article class="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
+          <p class="text-sm text-[var(--muted)]">{post.date}</p>
+          <h3 class="mt-2 text-lg font-bold">{post.title}</h3>
+          <p class="mt-3 text-sm leading-6 text-[var(--muted)]">{post.description}</p>
+          <a href={`/blog/${post.slug}`} class="mt-5 inline-block font-semibold text-[var(--accent)]">Read post</a>
+        </article>
+      ))}
+    </div>
+  </section>
+</BaseLayout>

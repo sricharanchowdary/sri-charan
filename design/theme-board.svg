@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+  <title id="title">Light and dark theme board</title>
+  <desc id="desc">Color palette and component samples for the portfolio light and dark themes.</desc>
+  <rect width="1200" height="520" fill="#f8fafc"/>
+  <text x="48" y="64" font-family="Arial, sans-serif" font-size="32" font-weight="700" fill="#111827">Theme board</text>
+
+  <g transform="translate(48 110)">
+    <rect width="500" height="330" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="28" y="48" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#111827">Light</text>
+    <rect x="28" y="82" width="72" height="72" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+    <rect x="118" y="82" width="72" height="72" rx="8" fill="#2563eb"/>
+    <rect x="208" y="82" width="72" height="72" rx="8" fill="#f97316"/>
+    <rect x="298" y="82" width="72" height="72" rx="8" fill="#047857"/>
+    <rect x="28" y="192" width="220" height="42" rx="6" fill="#2563eb"/>
+    <text x="55" y="219" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#ffffff">Primary action</text>
+    <rect x="28" y="252" width="330" height="42" rx="6" fill="#eef2f7"/>
+  </g>
+
+  <g transform="translate(650 110)">
+    <rect width="500" height="330" rx="12" fill="#172033" stroke="#334155"/>
+    <text x="28" y="48" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#f8fafc">Dark</text>
+    <rect x="28" y="82" width="72" height="72" rx="8" fill="#0f172a" stroke="#334155"/>
+    <rect x="118" y="82" width="72" height="72" rx="8" fill="#38bdf8"/>
+    <rect x="208" y="82" width="72" height="72" rx="8" fill="#f97316"/>
+    <rect x="298" y="82" width="72" height="72" rx="8" fill="#34d399"/>
+    <rect x="28" y="192" width="220" height="42" rx="6" fill="#38bdf8"/>
+    <text x="55" y="219" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#0f172a">Primary action</text>
+    <rect x="28" y="252" width="330" height="42" rx="6" fill="#1e293b"/>
+  </g>
+</svg>
