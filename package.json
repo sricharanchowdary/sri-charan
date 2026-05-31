@@ -27,6 +27,7 @@
 	},
 	"devDependencies": {
 		"@astrojs/check": "^0.9.5",
+		"@cloudflare/vite-plugin": "^1.39.0",
 		"@vitejs/plugin-react": "^6.0.2",
 		"typescript": "^5.9.3",
 		"vitest": "^4.0.14",
