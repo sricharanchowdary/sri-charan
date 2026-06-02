@@ -1,0 +1,18 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="404 - Page not found" description="Useful links when a page cannot be found.">
+  <section class="mx-auto max-w-2xl py-16 text-center">
+    <p class="text-sm font-semibold uppercase tracking-wide text-[var(--accent)]">404</p>
+    <h1 class="mt-3 text-4xl font-bold">That page is not here.</h1>
+    <p class="mt-4 text-lg leading-8 text-[var(--muted)]">
+      The link may be old, mistyped, or moved during a portfolio cleanup. These
+      are the best starting points.
+    </p>
+    <div class="mt-8 flex flex-wrap justify-center gap-3">
+      <a href="/" class="rounded-md bg-[var(--accent)] px-5 py-3 font-semibold text-white">Home</a>
+      <a href="/projects" class="rounded-md border border-[var(--border)] px-5 py-3 font-semibold">Projects</a>
+      <a href="/contact" class="rounded-md border border-[var(--border)] px-5 py-3 font-semibold">Contact</a>
+    </div>
+  </section>
+</BaseLayout>

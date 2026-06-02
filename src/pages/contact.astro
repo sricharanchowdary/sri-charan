@@ -1,0 +1,111 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../data/site';
+
+const hasPublicEmail = Boolean(site.email);
+---
+<BaseLayout title={`Contact - ${site.name}`} description="Send Sri Charan a message through the portfolio contact form.">
+  <section class="grid gap-10 lg:grid-cols-[0.85fr_1.15fr]">
+    <div>
+      <h1 class="text-4xl font-bold">Contact</h1>
+      <p class="mt-4 text-lg leading-8 text-[var(--muted)]">
+        Send a short note about a role, project, collaboration, or review. The
+        form validates in the browser and again in the Worker API.
+      </p>
+      {hasPublicEmail && (
+        <p class="mt-6 text-sm text-[var(--muted)]">
+          Prefer email? <a class="font-semibold text-[var(--accent)]" href={`mailto:${site.email}`}>{site.email}</a>
+        </p>
+      )}
+    </div>
+
+    <form id="contact-form" class="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5" novalidate>
+      <div class="hidden" aria-hidden="true">
+        <label for="company">Company</label>
+        <input id="company" name="company" type="text" tabindex="-1" autocomplete="off" />
+      </div>
+
+      <div>
+        <label for="name" class="block font-semibold">Name</label>
+        <input id="name" name="name" type="text" required minlength="2" autocomplete="name" class="mt-2 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-[var(--text)]" />
+        <p id="name-error" class="mt-2 min-h-5 text-sm text-[var(--danger)]"></p>
+      </div>
+
+      <div class="mt-5">
+        <label for="email" class="block font-semibold">Email</label>
+        <input id="email" name="email" type="email" required autocomplete="email" class="mt-2 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-[var(--text)]" />
+        <p id="email-error" class="mt-2 min-h-5 text-sm text-[var(--danger)]"></p>
+      </div>
+
+      <div class="mt-5">
+        <label for="message" class="block font-semibold">Message</label>
+        <textarea id="message" name="message" required minlength="10" maxlength="2000" rows="6" class="mt-2 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-[var(--text)]"></textarea>
+        <p id="message-error" class="mt-2 min-h-5 text-sm text-[var(--danger)]"></p>
+      </div>
+
+      <button id="submit-button" type="submit" class="mt-6 w-full rounded-md bg-[var(--accent)] px-5 py-3 font-semibold text-white hover:bg-[var(--accent-strong)]">
+        Send message
+      </button>
+      <p id="form-status" role="status" aria-live="polite" class="mt-4 min-h-6 text-center font-semibold"></p>
+    </form>
+  </section>
+
+  <script>
+    const form = document.querySelector('#contact-form');
+    const status = document.querySelector('#form-status');
+    const button = document.querySelector('#submit-button');
+
+    const setError = (field = '', message = '') => {
+      const el = document.querySelector(`#${field}-error`);
+      if (el) el.textContent = message || '';
+    };
+
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!(form instanceof HTMLFormElement)) return;
+
+      setError('name', '');
+      setError('email', '');
+      setError('message', '');
+      if (status) {
+        status.textContent = 'Sending...';
+        status.className = 'mt-4 min-h-6 text-center font-semibold text-[var(--muted)]';
+      }
+      if (button instanceof HTMLButtonElement) button.disabled = true;
+
+      const payload = Object.fromEntries(new FormData(form).entries());
+
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const result = await response.json();
+
+        if (!response.ok || !result.ok) {
+          Object.entries(result.errors || {}).forEach(([field, message]) => {
+            if (field === 'form' && status) status.textContent = String(message);
+            else setError(field, String(message));
+          });
+          if (status && !status.textContent) status.textContent = 'Please fix the highlighted fields.';
+          if (status) status.className = 'mt-4 min-h-6 text-center font-semibold text-[var(--danger)]';
+          return;
+        }
+
+        form.reset();
+        if (status) {
+          status.textContent = result.message || 'Thanks. Your message was received.';
+          status.className = 'mt-4 min-h-6 text-center font-semibold text-[var(--success)]';
+        }
+      } catch {
+        if (status) {
+          status.textContent = 'Network error. Please try again.';
+          status.className = 'mt-4 min-h-6 text-center font-semibold text-[var(--danger)]';
+        }
+      } finally {
+        if (button instanceof HTMLButtonElement) button.disabled = false;
+      }
+    });
+  </script>
+</BaseLayout>

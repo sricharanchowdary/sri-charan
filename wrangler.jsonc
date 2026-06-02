@@ -1,0 +1,15 @@
+{
+	"compatibility_date": "2026-05-26",
+	"compatibility_flags": ["global_fetch_strictly_public"],
+	"name": "my-portfolio",
+	"main": "src/worker.ts",
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS"
+	},
+	"observability": {
+		"enabled": true
+	}
+	// After creating D1 with `wrangler d1 create portfolio`, add:
+	// "d1_databases": [{ "binding": "DB", "database_name": "portfolio", "database_id": "YOUR_DATABASE_ID" }]
+}

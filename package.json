@@ -1,0 +1,36 @@
+{
+	"name": "my-portfolio",
+	"type": "module",
+	"version": "0.0.1",
+	"engines": {
+		"node": ">=22.12.0"
+	},
+	"scripts": {
+		"dev": "astro dev",
+		"build": "astro build",
+		"check": "astro check",
+		"lint": "astro check",
+		"test": "vitest run",
+		"preview": "astro build && astro preview",
+		"astro": "astro",
+		"generate-types": "wrangler types",
+		"deploy": "astro build && wrangler deploy",
+		"push:git": "sh ./scripts/push.sh",
+		"push:git:ps1": "pwsh ./scripts/push.ps1",
+		"cf-typegen": "wrangler types"
+	},
+	"dependencies": {
+		"@tailwindcss/postcss": "^4.3.0",
+		"astro": "^6.3.7",
+		"tailwindcss": "^4.3.0"
+	},
+	"devDependencies": {
+		"@astrojs/check": "^0.9.5",
+		"typescript": "^5.9.3",
+		"vitest": "^4.0.14",
+		"wrangler": "^4.94.0"
+	},
+	"overrides": {
+		"vite": "^7"
+	}
+}
