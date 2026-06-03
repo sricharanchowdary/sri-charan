@@ -13,13 +13,17 @@ import { projects, site } from '../../data/site';
 
   <section class="mt-10 grid gap-5">
     {projects.map((project) => (
-      <article class="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6">
+      <article
+        class="cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 transition hover:border-[var(--accent)] hover:shadow-lg"
+        data-project={JSON.stringify(project)}
+        onclick="openModal(this)"
+      >
         <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <h2 class="text-2xl font-bold">{project.title}</h2>
             <p class="mt-3 leading-7 text-[var(--muted)]">{project.summary}</p>
           </div>
-          <a href={`/projects/${project.slug}`} class="shrink-0 rounded-md border border-[var(--border)] px-4 py-2 font-semibold text-[var(--accent)] hover:bg-[var(--surface-muted)]">View case study</a>
+          <span class="shrink-0 rounded-md border border-[var(--border)] px-4 py-2 font-semibold text-[var(--accent)]">View details</span>
         </div>
         <div class="mt-5 flex flex-wrap gap-2">
           {project.tech.map((tech) => (
@@ -29,4 +33,79 @@ import { projects, site } from '../../data/site';
       </article>
     ))}
   </section>
+
+  <!-- Modal -->
+  <div id="modal-overlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 px-4" onclick="closeModalOnOverlay(event)">
+    <div class="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--surface)] p-8">
+      <button onclick="closeModal()" class="absolute right-4 top-4 rounded-full p-2 text-[var(--muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+
+      <h2 id="modal-title" class="pr-8 text-2xl font-bold"></h2>
+      <p id="modal-summary" class="mt-3 leading-7 text-[var(--muted)]"></p>
+
+      <div class="mt-6 space-y-5">
+        <div>
+          <h3 class="font-semibold text-[var(--accent)]">Problem</h3>
+          <p id="modal-problem" class="mt-2 leading-7 text-[var(--muted)]"></p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-[var(--accent)]">Approach</h3>
+          <p id="modal-approach" class="mt-2 leading-7 text-[var(--muted)]"></p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-[var(--accent)]">Outcome</h3>
+          <p id="modal-outcome" class="mt-2 leading-7 text-[var(--muted)]"></p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-[var(--accent)]">What I'd Change</h3>
+          <p id="modal-next" class="mt-2 leading-7 text-[var(--muted)]"></p>
+        </div>
+      </div>
+
+      <div id="modal-tech" class="mt-6 flex flex-wrap gap-2"></div>
+    </div>
+  </div>
 </BaseLayout>
+
+<script>
+  function openModal(card: HTMLElement) {
+    const data = JSON.parse(card.dataset.project || '{}');
+    const overlay = document.getElementById('modal-overlay');
+
+    document.getElementById('modal-title')!.textContent = data.title;
+    document.getElementById('modal-summary')!.textContent = data.summary;
+    document.getElementById('modal-problem')!.textContent = data.problem;
+    document.getElementById('modal-approach')!.textContent = data.approach;
+    document.getElementById('modal-outcome')!.textContent = data.outcome;
+    document.getElementById('modal-next')!.textContent = data.next;
+
+    const techContainer = document.getElementById('modal-tech')!;
+    techContainer.innerHTML = data.tech.map((t: string) =>
+      `<span class="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-sm font-medium text-[var(--text)]">${t}</span>`
+    ).join('');
+
+    overlay!.classList.remove('hidden');
+    overlay!.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    const overlay = document.getElementById('modal-overlay');
+    overlay!.classList.add('hidden');
+    overlay!.classList.remove('flex');
+    document.body.style.overflow = '';
+  }
+
+  function closeModalOnOverlay(event: MouseEvent) {
+    if (event.target === document.getElementById('modal-overlay')) {
+      closeModal();
+    }
+  }
+
+  (window as any).openModal = openModal;
+  (window as any).closeModal = closeModal;
+  (window as any).closeModalOnOverlay = closeModalOnOverlay;
+</script>
