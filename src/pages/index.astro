@@ -17,6 +17,9 @@ import { posts, projects, site } from '../data/site';
       <div class="mt-8 flex flex-wrap gap-3">
         <a href="/projects" class="rounded-md bg-[var(--accent)] px-5 py-3 font-semibold text-white hover:bg-[var(--accent-strong)]">View projects</a>
         <a href="/contact" class="rounded-md border border-[var(--border)] px-5 py-3 font-semibold text-[var(--text)] hover:bg-[var(--surface-muted)]">Contact me</a>
+        {site.repo && (
+          <a href={site.repo} target="_blank" rel="noreferrer" class="rounded-md border border-[var(--border)] px-5 py-3 font-semibold text-[var(--accent)] hover:bg-[var(--surface-muted)]">GitHub</a>
+        )}
       </div>
     </div>
 

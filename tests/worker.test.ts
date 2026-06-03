@@ -69,4 +69,26 @@ describe('worker contact route', () => {
     expect(response.status).toBe(200);
     await expect(response.text()).resolves.toBe('asset response');
   });
+  it('returns 405 for non-POST requests to /api/contact', async () => {
+    const response = await worker.fetch(
+      new Request('https://example.com/api/contact', {
+        method: 'GET',
+      }),
+      { ASSETS: assets }
+    );
+
+    expect(response.status).toBe(405);
+  });
+
+  it('handles invalid JSON body gracefully', async () => {
+    const response = await worker.fetch(
+      new Request('https://example.com/api/contact', {
+        method: 'POST',
+        body: 'not-valid-json',
+      }),
+      { ASSETS: assets }
+    );
+
+    expect(response.status).toBe(400);
+  });
 });

@@ -36,7 +36,7 @@ jobs:
         run: npm run check
 
       - name: Run tests
-        run: npm test
+        run: npm run test:coverage
 
       - name: Build site
         run: npm run build
@@ -46,3 +46,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           command: deploy
+

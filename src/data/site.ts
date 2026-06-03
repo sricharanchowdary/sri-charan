@@ -4,9 +4,8 @@ export const site = {
   description:
     'Portfolio of Sri Charan, a Data Science and AI student building practical machine learning and web systems.',
   url: import.meta.env.PUBLIC_SITE_URL ?? 'http://localhost:4321',
-  repo: import.meta.env.PUBLIC_REPO_URL ?? '',
+  repo: import.meta.env.PUBLIC_REPO_URL ?? 'https://github.com/sricharanchowdary/sri-charan',
   email: import.meta.env.PUBLIC_CONTACT_EMAIL ?? '',
-  studentId: '23M61A6626',
 };
 
 export const navItems = [

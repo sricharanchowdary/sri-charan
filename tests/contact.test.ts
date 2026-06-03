@@ -40,4 +40,42 @@ describe('validateContactInput', () => {
 
     expect(result.ok).toBe(false);
   });
+  it('rejects empty input', () => {
+    const result = validateContactInput({
+      name: '',
+      email: '',
+      message: '',
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects name with only spaces', () => {
+    const result = validateContactInput({
+      name: '   ',
+      email: 'valid@example.com',
+      message: 'This is a valid message for testing.',
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects malformed email formats', () => {
+    const emails = ['test@', '@gmail.com', 'plaintext'];
+    emails.forEach((email) => {
+      const result = validateContactInput({
+        name: 'Sri Charan',
+        email,
+        message: 'This is a valid message for testing.',
+      });
+      expect(result.ok).toBe(false);
+    });
+  });
+
+  it('rejects message that is too long', () => {
+    const result = validateContactInput({
+      name: 'Sri Charan',
+      email: 'sri@example.com',
+      message: 'a'.repeat(10001),
+    });
+    expect(result.ok).toBe(false);
+  });
 });

@@ -4,8 +4,8 @@ I've completed and deployed my portfolio for the IntegrAuth take-home assignment
 
 I'm proud of the end-to-end workflow (planning, design artifacts, tests, deployment). Next I would add monitoring and a production D1 binding for persistent contact storage.
 
-Repo: https://github.com/sricharan/my-portfolio
-Deployed: (pending - will add the workers.dev URL after GitHub Actions deploys)
+Repo: https://github.com/sricharanchowdary/sri-charan
+Deployed: https://sri-charan-portfolio.sricharanchowdary2005.workers.dev
 
 Thanks for reviewing — please let me know if you want any changes.
 
