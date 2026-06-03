@@ -51,11 +51,11 @@ const analyticsConfig = analyticsToken ? JSON.stringify({ token: analyticsToken 
         <a href="/" class="text-xl font-bold text-[var(--accent)]">Sri Charan</a>
         <div class="flex flex-wrap items-center gap-2 sm:gap-3">
           {navItems.map((item) => (
-            
-              href={item.href}
+            <a
+             href={item.href}
               class="rounded-md px-3 py-2 text-sm font-medium text-[var(--muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
             >
-              {item.label}
+               {item.label}
             </a>
           ))}
           <button
