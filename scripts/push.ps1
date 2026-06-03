@@ -15,7 +15,7 @@ try { git branch -M main } catch {}
 try {
   git remote get-url origin >/dev/null 2>&1
 } catch {
-  git remote add origin https://github.com/sricharan/my-portfolio.git
+  git remote add origin https://github.com/sricharanchowdary/sri-charan.git
 }
 
 git push -u origin main

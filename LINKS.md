@@ -5,8 +5,8 @@ are final.
 
 ## Needs Your Real Values
 
-- Portfolio live URL: set `PUBLIC_SITE_URL`
-- GitHub repository: set `PUBLIC_REPO_URL` (repository set to `https://github.com/sricharan/my-portfolio` in `.env.example`)
+- Portfolio live URL: `https://sri-charan-portfolio.sricharanchowdary2005.workers.dev`
+- GitHub repository: set `PUBLIC_REPO_URL` (repository set to `https://github.com/sricharanchowdary/sri-charan` in `.env.example`)
 - Public email: set `PUBLIC_CONTACT_EMAIL`
 - Retinal project repo: currently hidden until a real URL is added in `src/data/site.ts`
 - Sentiment project repo: currently hidden until a real URL is added in `src/data/site.ts`
@@ -14,16 +14,8 @@ are final.
 - Cloudflare Web Analytics token: set as `PUBLIC_CF_WEB_ANALYTICS_TOKEN` after creating it in Cloudflare
 - D1 database ID: add to `wrangler.jsonc` after running `wrangler d1 create portfolio`
 
-Note: this folder currently has no `.git` directory, and no Git remote can be
-extracted locally. Add the GitHub repo URL to `PUBLIC_REPO_URL` when the
-repository is created or cloned.
-
-Checked value: `https://github.com/your-github-username/my-portfolio` returns
-404 and still contains a template username, so it has not been used as the final
-repository URL.
-
-Checked value: `https://github.com/your-username/my-portfolio` also contains a
-template username, so it has not been used as the final repository URL.
+Checked repository: [sricharanchowdary/sri-charan](https://github.com/sricharanchowdary/sri-charan)
+matches the local `origin` remote and is the final repository URL.
 
 ## Internal Links
 

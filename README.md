@@ -1,10 +1,10 @@
 # Sri Charan Portfolio
 
-Personal portfolio site for the IntegrAuth take-home assignment. It is a multi-page Astro site with project case studies, a Markdown blog, RSS, dark mode, a working Cloudflare Worker contact endpoint, tests, design artifacts, and GitHub Actions workflows.
+![CI](https://github.com/sricharanchowdary/sri-charan/actions/workflows/ci.yml/badge.svg)
+![Deploy](https://github.com/sricharanchowdary/sri-charan/actions/workflows/deploy.yml/badge.svg)
 
-Live site: pending deployment  
-Repository: https://github.com/sricharan/my-portfolio
-
+Live site: https://sri-charan-portfolio.sricharanchowdary2005.workers.dev
+Repository: [sricharanchowdary/sri-charan](https://github.com/sricharanchowdary/sri-charan)
 ## Stack
 
 - Astro for static pages and Markdown blog posts.
@@ -75,8 +75,8 @@ Set `PUBLIC_CF_WEB_ANALYTICS_TOKEN` in the deployment environment to enable the 
 Copy `.env.example` to `.env` for local testing, then replace the values after you know the final URLs:
 
 ```sh
-PUBLIC_SITE_URL=https://your-site.workers.dev
-PUBLIC_REPO_URL=https://github.com/sricharan/my-portfolio
+PUBLIC_SITE_URL=https://sri-charan-portfolio.sricharanchowdary2005.workers.dev
+PUBLIC_REPO_URL=https://github.com/sricharanchowdary/sri-charan
 PUBLIC_CONTACT_EMAIL=you@example.com
 PUBLIC_CF_WEB_ANALYTICS_TOKEN=your-cloudflare-web-analytics-token
 ```

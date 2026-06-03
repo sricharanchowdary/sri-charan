@@ -1,5 +1,4 @@
 name: CI
-
 on:
   pull_request:
   push:
@@ -13,6 +12,8 @@ jobs:
   build:
     name: Check, test, and build
     runs-on: ubuntu-latest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     steps:
       - name: Checkout repository
@@ -31,7 +32,15 @@ jobs:
         run: npm run check
 
       - name: Run tests
-        run: npm test
+        run: npm run test:coverage
 
-      - name: Build site
+      - name: Upload coverage to Codecov
+        if: ${{ env.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/lcov.info
+          token: ${{ env.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+
+      - name: Build
         run: npm run build

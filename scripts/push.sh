@@ -17,7 +17,7 @@ fi
 
 git branch -M main 2>/dev/null || true
 if ! git remote get-url origin >/dev/null 2>&1; then
-  git remote add origin https://github.com/sricharan/my-portfolio.git
+  git remote add origin https://github.com/sricharanchowdary/sri-charan.git
 fi
 
 git push -u origin main
