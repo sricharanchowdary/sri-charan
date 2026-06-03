@@ -6,6 +6,8 @@ export const site = {
   url: import.meta.env.PUBLIC_SITE_URL ?? 'http://localhost:4321',
   repo: import.meta.env.PUBLIC_REPO_URL ?? 'https://github.com/sricharanchowdary/sri-charan',
   email: import.meta.env.PUBLIC_CONTACT_EMAIL ?? '',
+  github: 'https://github.com/sricharanchowdary',
+  whatsapp: 'https://wa.me/91XXXXXXXXXX',
 };
 
 export const navItems = [
