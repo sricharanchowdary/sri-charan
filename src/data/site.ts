@@ -7,7 +7,7 @@ export const site = {
   repo: import.meta.env.PUBLIC_REPO_URL ?? 'https://github.com/sricharanchowdary/sri-charan',
   email: import.meta.env.PUBLIC_CONTACT_EMAIL ?? '',
   github: 'https://github.com/sricharanchowdary',
-  whatsapp: 'https://wa.me/91XXXXXXXXXX',
+  whatsapp: 'https://wa.me/919876543210',
 };
 
 export const navItems = [
