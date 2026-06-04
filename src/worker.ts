@@ -1,18 +1,11 @@
 import { jsonResponse, validateContactInput } from './lib/contact';
 
-type D1Database = {
-  prepare: (query: string) => {
-    bind: (...values: unknown[]) => {
-      run: () => Promise<unknown>;
-    };
-  };
-};
-
 type Env = {
   ASSETS: {
     fetch: (request: Request) => Promise<Response>;
   };
-  DB?: D1Database;
+  RESEND_API_KEY?: string;
+  CONTACT_TO_EMAIL?: string;
 };
 
 export default {
@@ -36,21 +29,28 @@ export default {
         return jsonResponse({ ok: false, errors: validation.errors }, 400);
       }
 
-      if (env.DB) {
-        await env.DB
-          .prepare(
-            'INSERT INTO contact_submissions (name, email, message, ip_address, created_at) VALUES (?, ?, ?, ?, ?)'
-          )
-          .bind(
-            validation.value.name,
-            validation.value.email,
-            validation.value.message,
-            request.headers.get('CF-Connecting-IP') ?? 'unknown',
-            new Date().toISOString()
-          )
-          .run();
+      if (env.RESEND_API_KEY && env.CONTACT_TO_EMAIL) {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'Portfolio Contact <onboarding@resend.dev>',
+            to: env.CONTACT_TO_EMAIL,
+            subject: `New message from ${validation.value.name}`,
+            html: `
+              <h2>New Contact Form Submission</h2>
+              <p><strong>Name:</strong> ${validation.value.name}</p>
+              <p><strong>Email:</strong> ${validation.value.email}</p>
+              <p><strong>Message:</strong></p>
+              <p>${validation.value.message}</p>
+            `,
+          }),
+        });
       } else {
-        console.info('Contact submission received without D1 binding configured.', {
+        console.info('Contact submission received without Resend configured.', {
           name: validation.value.name,
           email: validation.value.email,
         });
