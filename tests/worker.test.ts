@@ -27,8 +27,7 @@ describe('worker contact route', () => {
   });
 
   it('sends email for valid submissions when Resend is configured', async () => {
-    global.fetch = vi.fn(async () => new Response(JSON.stringify({ id: 'test' }), { status: 200 }));
-
+    vi.stubGlobal('fetch', vi.fn(async () => new response(json.stringify({ id: 'test' }), {status: 200})));
     const response = await worker.fetch(
       new Request('https://example.com/api/contact', {
         method: 'POST',
