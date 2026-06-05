@@ -35,7 +35,7 @@ import { projects, site } from '../../data/site';
   </section>
 
   <!-- Modal -->
-  <div id="modal-overlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 px-4" onclick="closeModalOnOverlay(event)">
+  <div id="modal-overlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 px-4" onclick="closeModalOnOverlay(this)">
     <div class="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--surface)] p-8">
       <button onclick="closeModal()" class="absolute right-4 top-4 rounded-full p-2 text-[var(--muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
