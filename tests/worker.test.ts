@@ -26,10 +26,8 @@ describe('worker contact route', () => {
     });
   });
 
-  it('stores valid submissions when D1 is configured', async () => {
-    const run = vi.fn(async () => ({}));
-    const bind = vi.fn(() => ({ run }));
-    const prepare = vi.fn(() => ({ bind }));
+  it('sends email for valid submissions when Resend is configured', async () => {
+    global.fetch = vi.fn(async () => new Response(JSON.stringify({ id: 'test' }), { status: 200 }));
 
     const response = await worker.fetch(
       new Request('https://example.com/api/contact', {
@@ -44,7 +42,11 @@ describe('worker contact route', () => {
           message: 'I would like to discuss the portfolio.',
         }),
       }),
-      { ASSETS: assets, DB: { prepare } }
+      {
+        ASSETS: assets,
+        RESEND_API_KEY: 'test_key',
+        CONTACT_TO_EMAIL: 'cc6391538@gmail.com',
+      }
     );
 
     expect(response.status).toBe(200);
@@ -52,23 +54,18 @@ describe('worker contact route', () => {
       ok: true,
       message: expect.any(String),
     });
-    expect(prepare).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO contact_submissions'));
-    expect(bind).toHaveBeenCalledWith(
-      'Sri Charan',
-      'sri@example.com',
-      'I would like to discuss the portfolio.',
-      '203.0.113.10',
-      expect.any(String)
-    );
-    expect(run).toHaveBeenCalled();
   });
 
   it('serves static assets for non-api routes', async () => {
-    const response = await worker.fetch(new Request('https://example.com/about'), { ASSETS: assets });
+    const response = await worker.fetch(
+      new Request('https://example.com/about'),
+      { ASSETS: assets }
+    );
 
     expect(response.status).toBe(200);
     await expect(response.text()).resolves.toBe('asset response');
   });
+
   it('returns 405 for non-POST requests to /api/contact', async () => {
     const response = await worker.fetch(
       new Request('https://example.com/api/contact', {
