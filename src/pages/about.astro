@@ -6,6 +6,24 @@ import { site } from '../data/site';
   <section class="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
     <div>
       <h1 class="text-4xl font-bold">About me</h1>
+      <div class="mt-6 space-y-4">
+        <div class="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
+          <p class="text-sm font-semibold uppercase tracking-wide text-[var(--accent)]">Role</p>
+          <p class="mt-1 text-[var(--muted)]">Data Science and AI Student</p>
+        </div>
+        <div class="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
+          <p class="text-sm font-semibold uppercase tracking-wide text-[var(--accent)]">Location</p>
+          <p class="mt-1 text-[var(--muted)]">Hyderabad, India</p>
+        </div>
+        <div class="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
+          <p class="text-sm font-semibold uppercase tracking-wide text-[var(--accent)]">Focus</p>
+          <p class="mt-1 text-[var(--muted)]">Computer Vision, Deep Learning, Deployment</p>
+        </div>
+        <div class="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
+          <p class="text-sm font-semibold uppercase tracking-wide text-[var(--accent)]">GitHub</p>
+          <a href={site.github} target="_blank" rel="noreferrer" class="mt-1 block font-semibold text-[var(--accent)] hover:underline">sricharanchowdary</a>
+        </div>
+      </div>
     </div>
     <div class="space-y-5 text-lg leading-8 text-[var(--muted)]">
       <p>
