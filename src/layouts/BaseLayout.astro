@@ -1,4 +1,3 @@
----
 import '../styles/global.css';
 import { navItems, site } from '../data/site';
 
@@ -215,19 +214,14 @@ Keep answers short, friendly and helpful. If asked something you don't know, say
         chatHistory.push({ role: 'user', content: text });
 
         try {
-          const response = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              model: 'claude-sonnet-4-20250514',
-              max_tokens: 1000,
-              system: SYSTEM_PROMPT,
-              messages: chatHistory,
-            }),
-          });
+          const response = await fetch('/api/chat', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ messages: chatHistory }),
+});
 
-          const data = await response.json();
-          const reply = data.content?.[0]?.text || "I'm not sure about that. Try visiting the relevant page!";
+const data = await response.json();
+const reply = data.reply || "I'm not sure about that. Try visiting the relevant page!";
 
           chatHistory.push({ role: 'assistant', content: reply });
 

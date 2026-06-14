@@ -1,15 +1,23 @@
 {
-	"compatibility_date": "2026-05-26",
-	"compatibility_flags": ["global_fetch_strictly_public"],
-	"name": "sricharanchowdary",
-	"main": "src/worker.ts",
-	"assets": {
-		"directory": "./dist",
-		"binding": "ASSETS"
-	},
-	"observability": {
-		"enabled": true
-	}
-	// After creating D1 with `wrangler d1 create portfolio`, add:
-	// "d1_databases": [{ "binding": "DB", "database_name": "portfolio", "database_id": "YOUR_DATABASE_ID" }]
+  "compatibility_date": "2026-06-13",
+  "compatibility_flags": ["global_fetch_strictly_public"],
+  "name": "sricharanchowdary",
+  "main": "src/worker.ts",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "ai": {
+    "binding": "AI"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "contact-submissions-db",
+      "database_id": "your-real-database-id-here"
+    }
+  ]
 }
