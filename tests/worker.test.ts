@@ -5,6 +5,26 @@ const assets = {
   fetch: vi.fn(async () => new Response('asset response', { status: 200 })),
 };
 
+// Mock D1 database — chains prepare().bind().run() and prepare().all()
+const mockDB = {
+  prepare: vi.fn(() => ({
+    bind: vi.fn(() => ({
+      run: vi.fn(async () => ({})),
+      all: vi.fn(async () => ({ results: [] })),
+    })),
+    all: vi.fn(async () => ({ results: [] })),
+    run: vi.fn(async () => ({})),
+  })),
+} as any;
+
+const mockAI = {} as any;
+
+const baseEnv = {
+  ASSETS: assets,
+  DB: mockDB,
+  AI: mockAI,
+};
+
 describe('worker contact route', () => {
   it('returns validation errors for bad contact payloads', async () => {
     const response = await worker.fetch(
@@ -12,9 +32,8 @@ describe('worker contact route', () => {
         method: 'POST',
         body: JSON.stringify({ name: 'S', email: 'bad', message: 'short' }),
       }),
-      { ASSETS: assets }
+      { ...baseEnv }
     );
-
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({
       ok: false,
@@ -28,7 +47,7 @@ describe('worker contact route', () => {
 
   it('sends email for valid submissions when Resend is configured', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ id: 'test' }), { status: 200 })));
-       const response = await worker.fetch(
+    const response = await worker.fetch(
       new Request('https://example.com/api/contact', {
         method: 'POST',
         headers: {
@@ -42,12 +61,11 @@ describe('worker contact route', () => {
         }),
       }),
       {
-        ASSETS: assets,
+        ...baseEnv,
         RESEND_API_KEY: 'test_key',
         CONTACT_TO_EMAIL: 'cc6391538@gmail.com',
       }
     );
-
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
       ok: true,
@@ -58,21 +76,17 @@ describe('worker contact route', () => {
   it('serves static assets for non-api routes', async () => {
     const response = await worker.fetch(
       new Request('https://example.com/about'),
-      { ASSETS: assets }
+      { ...baseEnv }
     );
-
     expect(response.status).toBe(200);
     await expect(response.text()).resolves.toBe('asset response');
   });
 
   it('returns 405 for non-POST requests to /api/contact', async () => {
     const response = await worker.fetch(
-      new Request('https://example.com/api/contact', {
-        method: 'GET',
-      }),
-      { ASSETS: assets }
+      new Request('https://example.com/api/contact', { method: 'GET' }),
+      { ...baseEnv }
     );
-
     expect(response.status).toBe(405);
   });
 
@@ -82,9 +96,8 @@ describe('worker contact route', () => {
         method: 'POST',
         body: 'not-valid-json',
       }),
-      { ASSETS: assets }
+      { ...baseEnv }
     );
-
     expect(response.status).toBe(400);
   });
 });
