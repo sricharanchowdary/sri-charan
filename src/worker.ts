@@ -1,4 +1,3 @@
-/// <reference types="@cloudflare/workers-types" />
 import { jsonResponse, validateContactInput } from './lib/contact';
 
 type Env = {
@@ -152,7 +151,7 @@ export default {
       return new Response(JSON.stringify({ ok: true }), {
         headers: {
           'Content-Type': 'application/json',
-          'Set-Cookie': `session=${token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=86400`,
+          'Set-Cookie': `session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400`,
         },
       });
     }
@@ -162,7 +161,7 @@ export default {
       return new Response(JSON.stringify({ ok: true }), {
         headers: {
           'Content-Type': 'application/json',
-          'Set-Cookie': 'session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0',
+          'Set-Cookie': 'session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0',
         },
       });
     }

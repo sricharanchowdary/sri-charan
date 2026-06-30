@@ -33,7 +33,7 @@
 		"@vitest/coverage-v8": "^4.0.14",
 		"typescript": "^5.9.3",
 		"vitest": "^4.0.14",
-		"wrangler": "^4.94.0"
+		"wrangler": "^4.103.0"
 	},
 	"overrides": {
 		"vite": "^7"
