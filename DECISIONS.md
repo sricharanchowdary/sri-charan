@@ -23,3 +23,16 @@ I verified the code for semantic structure, labels, keyboard-focus styles, skip 
 ## What's Next
 
 Before final submission, add the final public URLs and email address, create and bind the D1 database, add the Cloudflare Web Analytics token, and deploy through GitHub Actions. In v2, I would add automatic OG image generation per post, post-deploy smoke tests, and a small analytics or contact-submission monitoring workflow.
+## Auth Mechanism — Extension 1
+
+Chose a **session cookie** (HMAC-SHA256 signed, HttpOnly) over JWT because:
+- Single admin user — no need for stateless multi-client tokens
+- Simpler to implement and audit
+- HttpOnly prevents JS access, reducing XSS risk
+
+## At 10,000+ entries
+
+Would switch from `SELECT *` with `is_deleted = 0` to:
+- Add pagination (`LIMIT`/`OFFSET` or cursor-based)
+- Add an index on `submitted_at` for faster sorting
+- Consider archiving old soft-deleted rows to a separate tables
