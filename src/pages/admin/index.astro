@@ -1,0 +1,58 @@
+<script>
+    async function loadSubmissions() {
+      const status = document.getElementById('status');
+      const list = document.getElementById('list');
+      const empty = document.getElementById('empty');
+
+      const res = await fetch('/api/admin/submissions');
+
+      if (res.status === 401) {
+        window.location.href = '/admin/login';
+        return;
+      }
+
+      const data = await res.json();
+      status.hidden = true;
+
+      if (!data.submissions || data.submissions.length === 0) {
+        empty.hidden = false;
+        return;
+      }
+
+      for (const s of data.submissions) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.id = 'sub-' + s.id;
+        card.innerHTML =
+          '<div class="card-header">' +
+            '<div>' +
+              '<div class="name">' + s.name + '</div>' +
+              '<div class="email">' + s.email + '</div>' +
+            '</div>' +
+            '<button class="delete-btn" data-id="' + s.id + '">Delete</button>' +
+          '</div>' +
+          '<div class="message">' + s.message + '</div>' +
+          '<div class="date">' + new Date(s.submitted_at).toLocaleString() + '</div>';
+        list.appendChild(card);
+      }
+
+      list.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.delete-btn');
+        if (!btn) return;
+        const id = btn.dataset.id;
+        btn.textContent = '…';
+        const delRes = await fetch('/api/admin/submissions/' + id, { method: 'DELETE' });
+        if (delRes.ok) {
+          document.getElementById('sub-' + id).remove();
+          if (list.children.length === 0) empty.hidden = false;
+        }
+      });
+    }
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await fetch('/api/admin/logout', { method: 'POST' });
+      window.location.href = '/admin/login';
+    });
+
+    loadSubmissions();
+</script>
