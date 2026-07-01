@@ -92,7 +92,7 @@ const hasPublicEmail = Boolean(site.email);
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-        const result = await response.json();
+        const result = await response.json() as any;
 
         if (!response.ok || !result.ok) {
           Object.entries(result.errors || {}).forEach(([field, message]) => {
