@@ -1,0 +1,22 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "sricharanchowdary",
+	"compatibility_date": "2026-06-02",
+	"observability": {
+		"enabled": true
+	},
+	"assets": {
+		"directory": "my-portfolio"
+	},
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"d1_databases": [
+		{
+			"binding": "contact_submissions_db",
+			"database_name": "contact-submissions-db",
+			"database_id": "22d95b33-d73c-45c5-bd87-12029bdf4e09",
+			"remote": true
+		}
+	]
+}
