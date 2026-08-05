@@ -1,6 +1,5 @@
 import { jsonResponse, validateContactInput } from './lib/contact';
-import { posts } from './data/site';
-
+import { posts } from './data/posts';
 type Env = {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
   RESEND_API_KEY?: string;
