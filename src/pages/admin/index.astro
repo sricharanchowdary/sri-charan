@@ -1,60 +1,80 @@
-<script>
-  async function loadSubmissions() {
-    const status = document.getElementById('status') as HTMLElement | null;
-    const list = document.getElementById('list') as HTMLElement | null;
-    const empty = document.getElementById('empty') as HTMLElement | null;
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { site } from '../../data/site';
+---
+<BaseLayout title={`Admin Dashboard - ${site.name}`} description="Manage contact form submissions.">
+  <section>
+    <div class="flex items-center justify-between">
+      <h1 class="text-3xl font-bold">Contact Submissions</h1>
+      <button id="logout-btn" type="button" class="rounded-md border border-[var(--border)] px-4 py-2 font-semibold text-[var(--text)] hover:bg-[var(--surface-muted)]">
+        Logout
+      </button>
+    </div>
 
-    const res = await fetch('/api/admin/submissions');
-    if (res.status === 401) {
-      window.location.href = '/admin/login';
-      return;
-    }
+    <p id="status" class="mt-6 text-[var(--muted)]">Loading submissions…</p>
+    <p id="empty" hidden class="mt-6 text-[var(--muted)]">No submissions yet.</p>
 
-    const data = await res.json() as any;
-    if (status) status.hidden = true;
+    <div id="list" class="mt-6 space-y-4"></div>
+  </section>
 
-    if (!data.submissions || data.submissions.length === 0) {
-      if (empty) empty.hidden = false;
-      return;
-    }
+  <script>
+    async function loadSubmissions() {
+      const status = document.getElementById('status') as HTMLElement | null;
+      const list = document.getElementById('list') as HTMLElement | null;
+      const empty = document.getElementById('empty') as HTMLElement | null;
 
-    for (const s of data.submissions) {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.id = 'sub-' + s.id;
-      card.innerHTML =
-        '<div class="card-header">' +
-          '<div>' +
-            '<div class="name">' + s.name + '</div>' +
-            '<div class="email">' + s.email + '</div>' +
+      const res = await fetch('/api/admin/submissions');
+      if (res.status === 401) {
+        window.location.href = '/admin/login';
+        return;
+      }
+
+      const data = await res.json() as any;
+      if (status) status.hidden = true;
+
+      if (!data.submissions || data.submissions.length === 0) {
+        if (empty) empty.hidden = false;
+        return;
+      }
+
+      for (const s of data.submissions) {
+        const card = document.createElement('div');
+        card.className = 'rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5';
+        card.id = 'sub-' + s.id;
+        card.innerHTML =
+          '<div class="flex items-start justify-between gap-4">' +
+            '<div>' +
+              '<div class="font-semibold">' + s.name + '</div>' +
+              '<div class="text-sm text-[var(--muted)]">' + s.email + '</div>' +
+            '</div>' +
+            '<button class="delete-btn rounded-md border border-[var(--border)] px-3 py-1.5 text-sm font-semibold text-[var(--danger)] hover:bg-[var(--surface-muted)]" data-id="' + s.id + '">Delete</button>' +
           '</div>' +
-          '<button class="delete-btn" data-id="' + s.id + '">Delete</button>' +
-        '</div>' +
-        '<div class="message">' + s.message + '</div>' +
-        '<div class="date">' + new Date(s.submitted_at).toLocaleString() + '</div>';
-      if (list) list.appendChild(card);
+          '<div class="mt-3 whitespace-pre-wrap text-[var(--text)]">' + s.message + '</div>' +
+          '<div class="mt-3 text-xs text-[var(--muted)]">' + new Date(s.submitted_at).toLocaleString() + '</div>';
+        if (list) list.appendChild(card);
+      }
+
+      if (list) {
+        list.addEventListener('click', async (e) => {
+          const target = e.target as HTMLElement;
+          const btn = target.closest('.delete-btn') as HTMLElement | null;
+          if (!btn) return;
+          const id = btn.dataset.id;
+          btn.textContent = '…';
+          const delRes = await fetch('/api/admin/submissions/' + id, { method: 'DELETE' });
+          if (delRes.ok) {
+            document.getElementById('sub-' + id)?.remove();
+            if (list.children.length === 0 && empty) empty.hidden = false;
+          }
+        });
+      }
     }
 
-    if (list) {
-      list.addEventListener('click', async (e) => {
-        const target = e.target as HTMLElement;
-        const btn = target.closest('.delete-btn') as HTMLElement | null;
-        if (!btn) return;
-        const id = btn.dataset.id;
-        btn.textContent = '…';
-        const delRes = await fetch('/api/admin/submissions/' + id, { method: 'DELETE' });
-        if (delRes.ok) {
-          document.getElementById('sub-' + id)?.remove();
-          if (list.children.length === 0 && empty) empty.hidden = false;
-        }
-      });
-    }
-  }
+    document.getElementById('logout-btn')?.addEventListener('click', async () => {
+      await fetch('/api/admin/logout', { method: 'POST' });
+      window.location.href = '/admin/login';
+    });
 
-  document.getElementById('logout-btn')?.addEventListener('click', async () => {
-    await fetch('/api/admin/logout', { method: 'POST' });
-    window.location.href = '/admin/login';
-  });
-
-  loadSubmissions();
-</script>
+    loadSubmissions();
+  </script>
+</BaseLayout>

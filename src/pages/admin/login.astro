@@ -1,31 +1,60 @@
-<script>
-  const form = document.getElementById('login-form');
-  const btn = document.getElementById('btn');
-  const error = document.getElementById('error');
-  const passwordInput = document.getElementById('password');
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { site } from '../../data/site';
+---
+<BaseLayout title={`Admin Login - ${site.name}`} description="Sign in to manage contact form submissions.">
+  <section class="mx-auto max-w-md">
+    <h1 class="text-3xl font-bold">Admin Login</h1>
+    <p class="mt-3 text-[var(--muted)]">Enter the admin password to manage contact submissions.</p>
 
-  if (form && btn && error && passwordInput) {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    <form id="login-form" class="mt-8 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5" novalidate>
+      <label for="password" class="block font-semibold">Password</label>
+      <input
+        id="password"
+        name="password"
+        type="password"
+        required
+        autocomplete="current-password"
+        class="mt-2 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-[var(--text)]"
+      />
 
-      const password = (passwordInput as HTMLInputElement).value;
-      btn.textContent = 'Logging in…';
-      btn.setAttribute('disabled', 'true');
-      error.hidden = true;
+      <p id="error" hidden class="mt-3 text-sm font-semibold text-[var(--danger)]">Incorrect password. Please try again.</p>
 
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+      <button id="btn" type="submit" class="mt-6 w-full rounded-md bg-[var(--accent)] px-5 py-3 font-semibold text-white hover:bg-[var(--accent-strong)]">
+        Login
+      </button>
+    </form>
+  </section>
+
+  <script>
+    const form = document.getElementById('login-form');
+    const btn = document.getElementById('btn');
+    const error = document.getElementById('error');
+    const passwordInput = document.getElementById('password');
+
+    if (form && btn && error && passwordInput) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const password = (passwordInput as HTMLInputElement).value;
+        btn.textContent = 'Logging in…';
+        btn.setAttribute('disabled', 'true');
+        error.hidden = true;
+
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password }),
+        });
+
+        if (res.ok) {
+          window.location.href = '/admin';
+        } else {
+          error.hidden = false;
+          btn.textContent = 'Login';
+          btn.removeAttribute('disabled');
+        }
       });
-
-      if (res.ok) {
-        window.location.href = '/admin';
-      } else {
-        error.hidden = false;
-        btn.textContent = 'Login';
-        btn.removeAttribute('disabled');
-      }
-    });
-  }
-</script>
+    }
+  </script>
+</BaseLayout>
