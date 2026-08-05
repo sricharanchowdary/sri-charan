@@ -1,4 +1,5 @@
 import { jsonResponse, validateContactInput } from './lib/contact';
+import { posts } from './data/site';
 
 type Env = {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
@@ -70,6 +71,29 @@ function sanitize(value: unknown, maxLen: number): string | null {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    // ── GET /api/posts ───────────────────────────────────────────
+    if (url.pathname === '/api/posts' && request.method === 'GET') {
+      const list = posts.map(({ slug, title, date, description }) => ({
+        slug,
+        title,
+        date,
+        description,
+      }));
+      return jsonResponse({ ok: true, posts: list });
+    }
+
+    // ── GET /api/posts/:slug ─────────────────────────────────────
+    const postMatch = url.pathname.match(/^\/api\/posts\/([a-z0-9-]+)$/);
+    if (postMatch && request.method === 'GET') {
+      const slug = postMatch[1];
+      const post = posts.find((p) => p.slug === slug);
+
+      if (!post) {
+        return jsonResponse({ ok: false, error: 'Post not found.' }, 404);
+      }
+
+      return jsonResponse({ ok: true, post });
+    }
 
     // ── POST /api/contact ──────────────────────────────────────────
     if (url.pathname === '/api/contact') {

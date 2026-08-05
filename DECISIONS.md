@@ -36,3 +36,16 @@ Would switch from `SELECT *` with `is_deleted = 0` to:
 - Add pagination (`LIMIT`/`OFFSET` or cursor-based)
 - Add an index on `submitted_at` for faster sorting
 - Consider archiving old soft-deleted rows to a separate tables
+## Extension 1 — Auth Mechanism
+
+Chose **session cookie (HMAC-SHA256)** over JWT because:
+- Single admin user — no need for stateless multi-client tokens
+- Simpler to implement and audit
+- HttpOnly flag prevents JS access, reducing XSS risk
+
+## Extension 1 — Scaling to 10,000+ entries
+
+Current approach works fine at low volume. At scale would:
+- Add `LIMIT`/`OFFSET` pagination on the admin list
+- Add an index on `submitted_at` for faster sorting
+- Archive soft-deleted rows to a separate table periodically
