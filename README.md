@@ -91,6 +91,11 @@ PUBLIC_CF_WEB_ANALYTICS_TOKEN=your-cloudflare-web-analytics-token
   - Streaming output safety filter using `TransformStream` to prevent system instruction leakage.
   - 11 adversarial test cases in `tests/security.test.ts`.
   - Comprehensive threat modeling and attack documentation in `SECURITY.md` and `ADVERSARIAL.md`.
+- **Extension 5: Automated Testing & TDD (Playwright & Vitest)**:
+  - Playwright E2E test suite for dark mode toggle persistence, contact form submission, and TDD copy-email button.
+  - 50 Vitest unit/integration tests with code coverage reporting.
+  - GitHub Actions CI workflow running on all Pull Requests with automatic merge blocking on test failure.
+  - Full details in [TESTING.md](./TESTING.md).
 
 ## Required Files
 
