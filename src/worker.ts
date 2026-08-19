@@ -345,6 +345,67 @@ export default {
       }
     }
 
+    // ── GET /api/weather ────────────────────────────────────────────
+    if (url.pathname === '/api/weather' && request.method === 'GET') {
+      if (!env.WEATHER_API_KEY) {
+        return jsonResponse({
+          ok: false,
+          error: 'Weather service is not configured.',
+          fallback: true,
+          weather: { city: 'Hyderabad', temp: null, feels_like: null, humidity: null, description: 'Unavailable', icon: null },
+        }, 500);
+      }
+
+      const CITY = 'Hyderabad';
+      const OWM_URL = `https://api.openweathermap.org/data/2.5/weather?q=${CITY},IN&units=metric&appid=${env.WEATHER_API_KEY}`;
+
+      try {
+        // 5-second timeout so the page doesn't hang if OWM is slow
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const apiRes = await fetch(OWM_URL, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!apiRes.ok) {
+          throw new Error(`OpenWeatherMap responded with ${apiRes.status}`);
+        }
+
+        const data: any = await apiRes.json();
+
+        return jsonResponse({
+          ok: true,
+          fallback: false,
+          weather: {
+            city: data.name ?? CITY,
+            temp: data.main?.temp ?? null,
+            feels_like: data.main?.feels_like ?? null,
+            humidity: data.main?.humidity ?? null,
+            description: data.weather?.[0]?.description ?? 'Unknown',
+            icon: data.weather?.[0]?.icon
+              ? `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`
+              : null,
+          },
+        });
+      } catch (err) {
+        // Graceful fallback: return a safe response so the frontend never breaks
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        return jsonResponse({
+          ok: false,
+          error: `Weather data unavailable: ${message}`,
+          fallback: true,
+          weather: {
+            city: 'Hyderabad',
+            temp: null,
+            feels_like: null,
+            humidity: null,
+            description: 'Temporarily unavailable',
+            icon: null,
+          },
+        }, 502);
+      }
+    }
+
     // ── Static assets fallback ─────────────────────────────────────
     return env.ASSETS.fetch(request);
   },
