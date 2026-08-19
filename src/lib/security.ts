@@ -26,9 +26,11 @@ const DENIED_TOPICS = [
   /\b(medical\s+history|health\s+records|sexual\s+orientation)\b/i,
 ];
 
-export type SecurityCheckResult =
-  | { safe: true }
-  | { safe: false; reason: 'adversarial_injection' | 'denied_topic'; sanitizedResponse: string };
+export interface SecurityCheckResult {
+  safe: boolean;
+  reason?: string;
+  sanitizedResponse?: string;
+}
 
 /**
  * Validates incoming user prompt against adversarial injections and denied topic policies
