@@ -1,74 +1,97 @@
-# Testing
+# Testing & Quality Assurance
 
-This project includes automated tests for the contact validation and worker endpoint. The CI workflow runs these tests on pull requests.
+This project enforces end-to-end quality with **Vitest unit/integration tests**, **Playwright browser end-to-end tests**, and **GitHub Actions automated CI workflows** that run on every pull request.
 
-Automated tests
+---
 
-- Run locally:
+## 1. Automated Test Suites
 
-```bash
-npm ci
-npm test
-```
-
-- Unit tests:
-  - `src/lib/contact.test.ts` — unit tests for `validateContactInput` (happy path and failure cases).
-  - `src/worker.test.ts` — basic checks that the Worker returns expected status codes and JSON for `/api/contact`.
-
-Manual tests
-
-1. Start dev server:
+### Commands to Run Locally
 
 ```bash
-npm run dev
-```
-
-2. Open `/contact` and try:
-   - Submit a valid message; verify success message.
-   - Submit invalid email; verify field-level error shown.
-   - Submit a short message; verify field-level error shown.
-   - Inspect network request to `/api/contact` to ensure JSON body is sent and responses are returned.
-
-3. With D1 unbound, the Worker logs submissions to console; with D1 bound, check the `contact_submissions` table.
-
-CI expectations
-
-- `npm test` must pass on pull requests (see `.github/workflows/ci.yml`).
-# Testing
-
-## Automated
-
-Commands run locally:
-
-```sh
+# Type check TypeScript and Astro files
 npm run check
+
+# Run Vitest unit, API, and eval test suites
 npm test
-npm run build
+
+# Run Vitest with code coverage
+npm run test:coverage
+
+# Run Playwright End-to-End tests in headless Chromium
+npm run test:e2e
+
+# View interactive HTML Playwright report
+npx playwright show-report
 ```
 
-Current result: all pass.
+---
 
-Vitest covers:
+## 2. Unit & Integration Tests (Vitest)
 
-- Valid contact form submissions.
-- Invalid name, email, and message values.
-- Honeypot spam rejection.
-- Worker API error response shape.
-- Worker API success response shape.
-- D1 persistence call for valid submissions.
-- Static asset fallback for non-API routes.
+Our Vitest suite covers **50 automated test cases** across 5 test files:
 
-## Manual Checklist
+- **`src/lib/contact.test.ts`**: Validates input sanitize/validation rules (name, email format, message length bounds, honeypot spam detection).
+- **`tests/contact.test.ts`**: Tests contact schema behavior, edge cases, and error formatting.
+- **`tests/worker.test.ts`**: Tests Cloudflare Worker endpoints (`/api/contact`, `/api/posts`, `/api/weather`, `/api/admin/*`, static asset fallbacks).
+- **`tests/security.test.ts`**: 11 adversarial tests validating prompt injection defense, zero-cost edge rejection, and system prompt leakage prevention.
+- **`tests/evals.test.ts`**: 20 evaluation test cases scoring accuracy, grounding, tone, and refusal behavior for the AI Résumé Chatbot.
 
-Run before final deploy:
+---
 
-- Home, About, Projects, Blog, Contact, and 404 render at 320px, 768px, and 1024px+.
-- Theme follows OS preference on first visit.
-- Manual dark-mode toggle persists across reloads.
-- Contact form shows field errors for invalid input.
-- Contact form posts successfully to `/api/contact` through Wrangler local dev.
-- RSS feed loads at `/rss.xml`.
-- Keyboard tab order is logical.
-- Skip-to-content link appears on focus.
-- Lighthouse mobile scores are at least 90 for Performance, Accessibility, Best Practices, and SEO.
-- axe DevTools has no critical violations.
+## 3. End-to-End Tests (Playwright)
+
+Located in the [`e2e/`](./e2e/) directory, configured in [`playwright.config.ts`](./playwright.config.ts) against the local Astro server (`http://localhost:4321`):
+
+### `e2e/portfolio.spec.ts`
+1. **Dark Mode Toggle & State Persistence**:
+   - Locates `#theme-toggle` button.
+   - Clicks button to switch between light and dark modes.
+   - Asserts immediate CSS class change on the `<html>` element.
+   - Inspects `localStorage` to confirm `theme` preference is persisted.
+   - Reloads the page (`page.reload()`) and verifies the saved theme state persists after reload.
+
+2. **Contact Form Submission & Feedback**:
+   - Intercepts `/api/contact` mock response.
+   - Fills `#name`, `#email`, `#message` inputs.
+   - Clicks `#submit-button`.
+   - Asserts that `#form-status` displays a positive success message.
+   - Verifies all form fields are automatically cleared upon success.
+
+### `e2e/copy-email.spec.ts` (TDD Implementation)
+3. **Copy Email to Clipboard Feature**:
+   - Grants browser context permissions for `clipboard-read` and `clipboard-write`.
+   - Locates `#copy-email-btn`.
+   - Clicks the copy button and verifies immediate feedback text (`Copied!`).
+   - Asserts that `navigator.clipboard.readText()` matches the correct email address.
+
+---
+
+## 4. Test-Driven Development (TDD) Workflow
+
+The "Copy Email to Clipboard" button was built strictly following TDD:
+
+1. **RED Phase**: Wrote failing Playwright test in `e2e/copy-email.spec.ts` checking for `#copy-email-btn` and committed:
+   `git commit -m "test(e2e): add failing Playwright test for copy email to clipboard button"`
+2. **GREEN Phase**: Implemented UI button and clipboard listener in `src/pages/contact.astro` to make the test pass, then committed:
+   `git commit -m "feat(contact): implement copy email button and make Playwright test pass"`
+3. **REFACTOR Phase**: Integrated into CI pipeline and verified across all browsers and test runs.
+
+---
+
+## 5. CI / CD GitHub Actions Workflow
+
+Configured in [`.github/workflows/ci.yml`](./.github/workflows/ci.yml):
+
+- Triggers on every `pull_request` against `main` and `push` to `main`.
+- Steps:
+  1. `actions/checkout@v4` and `actions/setup-node@v4` (Node 22 with npm cache).
+  2. `npm ci` (clean dependency installation).
+  3. `npm run check` (Astro type diagnostic check).
+  4. `npm run test:coverage` (runs all 50 Vitest tests; non-zero exit code on failure).
+  5. `npx playwright install --with-deps chromium` (installs browser and Linux OS dependencies).
+  6. `npm run test:e2e` (runs all 3 Playwright test suites).
+  7. `actions/upload-artifact@v4` (retains `playwright-report/` artifact for 14 days if tests fail).
+  8. `npm run build` (production build verification).
+
+**Merge Blocking**: Any failing unit test or E2E test exits with code `1`, immediately failing the PR check and blocking the merge.
