@@ -9,6 +9,8 @@
     "./worker-configuration.d.ts"
   ],
   "exclude": [
-    "dist"
+    "dist",
+    "coverage",
+    "node_modules"
   ]
 }
