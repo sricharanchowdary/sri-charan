@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { site } from '../data/site';
 
+const contactEmail = site.email || 'cc6391538@gmail.com';
 const hasPublicEmail = Boolean(site.email);
 ---
 <BaseLayout title={`Contact - ${site.name}`} description="Send Sri Charan a message through the portfolio contact form.">
@@ -19,6 +20,22 @@ const hasPublicEmail = Boolean(site.email);
           </svg>
           <span class="font-semibold">WhatsApp</span>
         </a>
+
+        <!-- Copy Email Button -->
+        <div class="flex items-center gap-3">
+          <button
+            id="copy-email-btn"
+            data-email={contactEmail}
+            class="flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--surface-muted)] cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+            </svg>
+            <span id="copy-btn-text">Copy Email</span>
+          </button>
+          <span class="text-sm text-[var(--muted)]">{contactEmail}</span>
+        </div>
+
         {hasPublicEmail && (
           <a href={`mailto:${site.email}`} class="flex items-center gap-3 text-[var(--muted)] hover:text-[var(--accent)]">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 24 24">
@@ -62,6 +79,24 @@ const hasPublicEmail = Boolean(site.email);
   </section>
 
   <script>
+    // Copy Email to Clipboard logic
+    const copyBtn = document.getElementById('copy-email-btn');
+    const copyText = document.getElementById('copy-btn-text');
+
+    copyBtn?.addEventListener('click', async () => {
+      const email = copyBtn.dataset.email || 'cc6391538@gmail.com';
+      try {
+        await navigator.clipboard.writeText(email);
+        if (copyText) copyText.textContent = 'Copied!';
+        setTimeout(() => {
+          if (copyText) copyText.textContent = 'Copy Email';
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy email:', err);
+      }
+    });
+
+    // Contact Form submission logic
     const form = document.querySelector('#contact-form');
     const status = document.querySelector('#form-status');
     const button = document.querySelector('#submit-button');
