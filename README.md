@@ -81,12 +81,27 @@ PUBLIC_CONTACT_EMAIL=you@example.com
 PUBLIC_CF_WEB_ANALYTICS_TOKEN=your-cloudflare-web-analytics-token
 ```
 
+## Extensions
+
+- **Extension 1: Backend Data & Storage**: D1 database for contact form submissions with soft-deletion and admin dashboard.
+- **Extension 2: External API Integration**: Weather service using OpenWeatherMap API with 5s `AbortController` timeout and guaranteed fallback.
+- **Extension 3: AI Résumé Chatbot & Evals**: Streaming Workers AI chatbot powered by `@cf/meta/llama-3.2-3b-instruct` with 20 evaluation test cases.
+- **Extension 4: AI AppSec & Adversarial Defense**:
+  - Input allow/deny logic for adversarial prompt injection detection and zero-cost edge rejection.
+  - Streaming output safety filter using `TransformStream` to prevent system instruction leakage.
+  - 11 adversarial test cases in `tests/security.test.ts`.
+  - Comprehensive threat modeling and attack documentation in `SECURITY.md` and `ADVERSARIAL.md`.
+
 ## Required Files
 
 - [PLAN.md](./PLAN.md)
 - [DESIGN.md](./DESIGN.md)
 - [DECISIONS.md](./DECISIONS.md)
 - [TESTING.md](./TESTING.md)
+- [SECURITY.md](./SECURITY.md)
+- [ADVERSARIAL.md](./ADVERSARIAL.md)
+- [SEQUENCE-DIAGRAMS.md](./SEQUENCE-DIAGRAMS.md)
+- [EVALS.md](./EVALS.md)
 - [design/](./design/)
 - [QUESTIONS.md](./QUESTIONS.md)
 - [LINKS.md](./LINKS.md)
