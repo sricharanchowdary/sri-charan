@@ -64,6 +64,13 @@ export function validatePromptSafety(input: string): SecurityCheckResult {
 }
 
 /**
+ * Explicit security checking function matching assignment signature
+ */
+export function checkSecurity(input: string): SecurityCheckResult {
+  return validatePromptSafety(input);
+}
+
+/**
  * Alias for prompt validation ensuring explicit return type matching
  */
 export function runSecurityCheck(input: string): SecurityCheckResult {
