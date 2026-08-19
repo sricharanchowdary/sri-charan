@@ -91,3 +91,27 @@ All API keys are stored as **Wrangler secrets** (`wrangler secret put <KEY>`), w
 - Not visible in `wrangler.jsonc` or any config file
 
 For local development, `.dev.vars` (gitignored) provides the same keys to `wrangler dev`.
+
+## AI Chatbot & Evaluation Suite — Extension 3
+
+### Model Choice: Cloudflare Workers AI (`@cf/meta/llama-3.2-3b-instruct`)
+
+I chose **`@cf/meta/llama-3.2-3b-instruct`** via Cloudflare Workers AI for the résumé chatbot because:
+- **Zero Third-Party Latency & Cost**: Runs natively on Cloudflare's GPU edge without sending data to external API providers or requiring third-party API keys.
+- **Native Streaming**: Supports Server-Sent Events (`stream: true`), returning a `ReadableStream` directly to the client for immediate visual feedback.
+- **Instruction Following**: The 3B parameter Llama 3.2 model provides strong instruction adherence for structured system prompts while maintaining low cold-start latency and small memory overhead.
+
+### Grounding Mechanism
+
+The chatbot is grounded using a **strict negative-constraint system prompt** injected before the user's query:
+1. **Full Context Injection**: The complete résumé text (`RESUME_TEXT` in `src/data/resume.ts`) is interpolated directly into `RESUME_SYSTEM_PROMPT`.
+2. **Explicit Refusal Clauses**: The system prompt contains explicit negative rules forbidding salary discussion, compensation figures, personal beliefs, health, or age, and commands the model to cite the contact form (`/contact`) whenever information is not in the CV.
+3. **First-Person Persona**: The model is instructed to speak as Sri Charan in a concise (2–4 sentence) tone.
+
+### Blind Spots & Limitations of the Evaluation Suite
+
+While the 20-case Vitest suite covers factual recall, salary refusal, hallucination rejection, and API protocol edge cases, several blind spots remain:
+- **Semantic Paraphrasing & Phrasing Variance**: The deterministic regex checks in unit tests verify target keywords and refusal phrases, but real-world users might use obscure colloquialisms or typos that bypass simple regex checks.
+- **Multilingual / Obfuscated Prompt Injections**: The suite tests direct adversarial prompts, but does not test encoded, translated (e.g., base64, ROT13, foreign languages), or multi-turn jailbreak attempts designed to trick small models into ignoring system prompts.
+- **Multi-Turn Conversation Memory**: `/api/resume-chat` is currently stateless (single-turn Q&A). The test suite does not evaluate context retention across consecutive message exchanges.
+- **Production Edge Latency & Rate Limits**: Vitest tests evaluate mock streams and endpoint response structure locally, but do not benchmark real Cloudflare Workers AI warm/cold execution times or GPU queue throttling under heavy concurrent load.
