@@ -60,7 +60,8 @@ export function validatePromptSafety(input: string): SecurityCheckResult {
     }
   }
 
-  return { safe: true };
+  // Return explicit optional properties to satisfy callers that access them without narrowing
+  return { safe: true, reason: undefined, sanitizedResponse: undefined };
 }
 
 /**
