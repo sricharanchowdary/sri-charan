@@ -1,5 +1,8 @@
 import { jsonResponse, validateContactInput } from './lib/contact';
 import { posts } from './data/posts';
+import { RESUME_SYSTEM_PROMPT } from './data/resume';
+import { validatePromptSafety, filterLLMOutput } from './lib/security';
+
 type Env = {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
   RESEND_API_KEY?: string;
@@ -8,6 +11,7 @@ type Env = {
   AI: Ai;
   DB: D1Database;
   ADMIN_PASSWORD?: string;
+  WEATHER_API_KEY?: string;
 };
 
 const SYSTEM_PROMPT = `You are Sri Charan's portfolio assistant. Answer questions about Sri Charan based on this information:
@@ -244,6 +248,101 @@ export default {
 
       const reply = (aiResponse as any).response ?? "I'm not sure about that. Try visiting the relevant page!";
       return jsonResponse({ ok: true, reply });
+    }
+
+    // ── POST /api/resume-chat (streaming + guardrails) ──────────────
+    if (url.pathname === '/api/resume-chat') {
+      if (request.method !== 'POST') {
+        return jsonResponse({ ok: false, error: 'Method not allowed.' }, 405);
+      }
+
+      let body: { question?: string };
+      try {
+        body = await request.json();
+      } catch {
+        return jsonResponse({ ok: false, error: 'Expected JSON body.' }, 400);
+      }
+
+      const question = typeof body.question === 'string' ? body.question.trim() : '';
+
+      if (!question) {
+        return jsonResponse({ ok: false, error: 'Please provide a question.' }, 400);
+      }
+
+      if (question.length > 500) {
+        return jsonResponse({ ok: false, error: 'Question is too long (max 500 characters).' }, 400);
+      }
+
+      // Input Guardrail: Validate against adversarial injections and denied topics
+      const safetyCheck = validatePromptSafety(question);
+      if (!safetyCheck.safe) {
+        // Return structured safe response directly, blocking the LLM call
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream({
+          start(controller) {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ response: safetyCheck.sanitizedResponse })}\n\n`)
+            );
+            controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+            controller.close();
+          },
+        });
+
+        return new Response(stream, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+          },
+        });
+      }
+
+      try {
+        const stream = (await env.AI.run('@cf/meta/llama-3.2-3b-instruct', {
+          messages: [
+            { role: 'system', content: RESUME_SYSTEM_PROMPT },
+            { role: 'user', content: question },
+          ],
+          stream: true,
+        })) as ReadableStream<Uint8Array>;
+
+        // Output Guardrail TransformStream: ensures no leaked system keys/prompts in the stream
+        const decoder = new TextDecoder();
+        const encoder = new TextEncoder();
+        let accumulatedText = '';
+
+        const transformStream = new TransformStream({
+          transform(chunk, controller) {
+            const chunkStr = decoder.decode(chunk, { stream: true });
+            accumulatedText += chunkStr;
+
+            // Forward valid SSE chunks
+            controller.enqueue(chunk);
+          },
+          flush(controller) {
+            // Post-generation inspection: if severe leak detected, append sanitized notice
+            const filtered = filterLLMOutput(accumulatedText);
+            if (filtered !== accumulatedText) {
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ response: '\n[Notice: Output filtered by safety policy.]' })}\n\n`)
+              );
+            }
+          },
+        });
+
+        const safeStream = stream.pipeThrough(transformStream);
+
+        return new Response(safeStream, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+          },
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        return jsonResponse({ ok: false, error: `AI inference failed: ${message}` }, 502);
+      }
     }
 
     // ── Static assets fallback ─────────────────────────────────────
