@@ -64,6 +64,13 @@ export function validatePromptSafety(input: string): SecurityCheckResult {
 }
 
 /**
+ * Alias for prompt validation ensuring explicit return type matching
+ */
+export function runSecurityCheck(input: string): SecurityCheckResult {
+  return validatePromptSafety(input);
+}
+
+/**
  * Output post-filter: inspects LLM generated output to ensure no system instructions,
  * API secrets, or jailbreak affirmations leaked through.
  */
