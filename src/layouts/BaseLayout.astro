@@ -196,13 +196,13 @@ const analyticsConfig = analyticsToken ? JSON.stringify({ token: analyticsToken 
 
         try {
           const response = await fetch('/api/chat', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ messages: chatHistory }),
-});
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: chatHistory }),
+          });
 
-const data = await response.json();
-const reply = (data as any).reply || "I'm not sure about that. Try visiting the relevant page!";
+          const data = await response.json();
+          const reply = (data as any).reply || "I'm not sure about that. Try visiting the relevant page!";
           chatHistory.push({ role: 'assistant', content: reply });
 
           typing.style.cssText = 'background:var(--surface-muted);padding:10px 12px;border-radius:12px;font-size:14px;color:var(--text);';
