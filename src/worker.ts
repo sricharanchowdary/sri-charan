@@ -1,4 +1,6 @@
 import { jsonResponse, validateContactInput } from './lib/contact';
+import { posts } from './data/posts';
+import { RESUME_SYSTEM_PROMPT } from './data/resume';
 
 type Env = {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
@@ -8,6 +10,7 @@ type Env = {
   AI: Ai;
   DB: D1Database;
   ADMIN_PASSWORD?: string;
+  WEATHER_API_KEY?: string;
 };
 
 const SYSTEM_PROMPT = `You are Sri Charan's portfolio assistant. Answer questions about Sri Charan based on this information:
@@ -221,6 +224,136 @@ export default {
 
       const reply = (aiResponse as any).response ?? "I'm not sure about that. Try visiting the relevant page!";
       return jsonResponse({ ok: true, reply });
+    }
+
+    // ── GET /api/posts ──────────────────────────────────────────────
+    if (url.pathname === '/api/posts' && request.method === 'GET') {
+      return jsonResponse({ ok: true, posts });
+    }
+
+    // ── GET /api/posts/:slug ───────────────────────────────────────
+    const postsMatch = url.pathname.match(/^\/api\/posts\/([a-z0-9-]+)$/);
+    if (postsMatch && request.method === 'GET') {
+      const slug = postsMatch[1];
+
+      if (!slug) {
+        return jsonResponse({ ok: false, error: 'Slug parameter is required.' }, 400);
+      }
+
+      const post = posts.find((p) => p.slug === slug);
+
+      if (!post) {
+        return jsonResponse({ ok: false, error: `Post not found: ${slug}` }, 404);
+      }
+
+      return jsonResponse({ ok: true, post });
+    }
+
+    // ── POST /api/resume-chat (streaming) ────────────────────────────
+    if (url.pathname === '/api/resume-chat') {
+      if (request.method !== 'POST') {
+        return jsonResponse({ ok: false, error: 'Method not allowed.' }, 405);
+      }
+
+      let body: { question?: string };
+      try {
+        body = await request.json();
+      } catch {
+        return jsonResponse({ ok: false, error: 'Expected JSON body.' }, 400);
+      }
+
+      const question = typeof body.question === 'string' ? body.question.trim() : '';
+
+      if (!question) {
+        return jsonResponse({ ok: false, error: 'Please provide a question.' }, 400);
+      }
+
+      if (question.length > 500) {
+        return jsonResponse({ ok: false, error: 'Question is too long (max 500 characters).' }, 400);
+      }
+
+      try {
+        const stream = await env.AI.run('@cf/meta/llama-3.2-3b-instruct', {
+          messages: [
+            { role: 'system', content: RESUME_SYSTEM_PROMPT },
+            { role: 'user', content: question },
+          ],
+          stream: true,
+        });
+
+        // Workers AI returns a ReadableStream when stream: true
+        return new Response(stream as ReadableStream, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+          },
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        return jsonResponse({ ok: false, error: `AI inference failed: ${message}` }, 502);
+      }
+    }
+
+    // ── GET /api/weather ────────────────────────────────────────────
+    if (url.pathname === '/api/weather' && request.method === 'GET') {
+      if (!env.WEATHER_API_KEY) {
+        return jsonResponse({
+          ok: false,
+          error: 'Weather service is not configured.',
+          fallback: true,
+          weather: { city: 'Hyderabad', temp: null, description: 'Unavailable' },
+        }, 500);
+      }
+
+      const CITY = 'Hyderabad';
+      const OWM_URL = `https://api.openweathermap.org/data/2.5/weather?q=${CITY},IN&units=metric&appid=${env.WEATHER_API_KEY}`;
+
+      try {
+        // 5-second timeout so the page doesn't hang if OWM is slow
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const apiRes = await fetch(OWM_URL, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!apiRes.ok) {
+          throw new Error(`OpenWeatherMap responded with ${apiRes.status}`);
+        }
+
+        const data: any = await apiRes.json();
+
+        return jsonResponse({
+          ok: true,
+          fallback: false,
+          weather: {
+            city: data.name ?? CITY,
+            temp: data.main?.temp ?? null,
+            feels_like: data.main?.feels_like ?? null,
+            humidity: data.main?.humidity ?? null,
+            description: data.weather?.[0]?.description ?? 'Unknown',
+            icon: data.weather?.[0]?.icon
+              ? `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`
+              : null,
+          },
+        });
+      } catch (err) {
+        // Graceful fallback: return a safe response so the frontend never breaks
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        return jsonResponse({
+          ok: false,
+          error: `Weather data unavailable: ${message}`,
+          fallback: true,
+          weather: {
+            city: 'Hyderabad',
+            temp: null,
+            feels_like: null,
+            humidity: null,
+            description: 'Temporarily unavailable',
+            icon: null,
+          },
+        }, 502);
+      }
     }
 
     // ── Static assets fallback ─────────────────────────────────────

@@ -36,3 +36,58 @@ Would switch from `SELECT *` with `is_deleted = 0` to:
 - Add pagination (`LIMIT`/`OFFSET` or cursor-based)
 - Add an index on `submitted_at` for faster sorting
 - Consider archiving old soft-deleted rows to a separate tables
+
+## External API Integration — Extension 2
+
+### Why OpenWeatherMap?
+
+Free tier with 1,000 calls/day, simple REST interface, and well-documented JSON responses. The weather widget is non-critical to the portfolio — it adds a personal touch (showing Hyderabad weather) without introducing a hard dependency.
+
+### Caching Strategy
+
+**Current: no cache.** The endpoint calls OpenWeatherMap on every request. This is acceptable because:
+
+- The free tier allows ~1 call/second (60/min), far above expected portfolio traffic.
+- Weather data is non-essential — if it's slightly stale or absent, the page still works.
+- Cloudflare Workers don't include KV or Cache API by default on the free plan. Adding KV just for weather would be over-engineering at this traffic level.
+
+**If traffic grows**, the recommended upgrade path is:
+
+1. Add a KV namespace binding (e.g., `WEATHER_CACHE`)
+2. Cache the OWM response with a 10-minute TTL: `await env.WEATHER_CACHE.put('hyderabad', json, { expirationTtl: 600 })`
+3. Check KV first, call OWM only on cache miss
+4. This reduces external API calls to ~6/hour instead of potentially thousands
+
+### How External Failure Is Handled
+
+The weather endpoint uses a **three-layer defense** so the frontend never breaks:
+
+| Layer | Trigger | Response |
+|---|---|---|
+| **Missing config** | `env.WEATHER_API_KEY` is undefined | `500` with `fallback: true` and null weather values |
+| **Timeout** | OpenWeatherMap doesn't respond within 5 seconds | `AbortController` aborts the fetch → caught in `catch` → `502` with fallback |
+| **API error** | OWM returns non-200, network failure, or bad JSON | Caught in `catch` → `502` with fallback |
+
+In all failure cases, the response body **always includes a `weather` object** with the same shape as the success case (but with `null` values and `fallback: true`). This means the frontend can render unconditionally:
+
+```js
+const { weather, fallback } = await res.json();
+// weather.city is always "Hyderabad", weather.temp is number or null
+// fallback is true when data is stale/unavailable
+```
+
+The 5-second timeout was chosen because:
+- Cloudflare Workers have a 30-second CPU time limit, but users won't wait that long.
+- 5 seconds is generous for a simple API call but short enough to avoid blocking the page.
+- The `AbortController` pattern is zero-dependency and native to the Workers runtime.
+
+### Secret Management
+
+All API keys are stored as **Wrangler secrets** (`wrangler secret put <KEY>`), which are:
+
+- Encrypted at rest by Cloudflare
+- Injected into the Worker environment (`env.*`) at runtime
+- Never committed to the repository
+- Not visible in `wrangler.jsonc` or any config file
+
+For local development, `.dev.vars` (gitignored) provides the same keys to `wrangler dev`.
