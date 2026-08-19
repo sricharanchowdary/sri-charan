@@ -1,60 +1,116 @@
-<script>
-  async function loadSubmissions() {
-    const status = document.getElementById('status') as HTMLElement | null;
-    const list = document.getElementById('list') as HTMLElement | null;
-    const empty = document.getElementById('empty') as HTMLElement | null;
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — Sri Charan</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; background: #0f172a; font-family: system-ui, -apple-system, sans-serif; color: #f1f5f9; padding: 2rem 1rem; }
+    .container { max-width: 900px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #334155; }
+    h1 { font-size: 1.5rem; font-weight: 700; color: #f1f5f9; }
+    .actions { display: flex; gap: 0.75rem; align-items: center; }
+    .btn { padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; text-decoration: none; cursor: pointer; border: none; }
+    .btn-secondary { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+    .btn-secondary:hover { color: #f1f5f9; border-color: #475569; }
+    .btn-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
+    .status-box { padding: 2rem; text-align: center; color: #94a3b8; font-size: 1rem; background: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+    .card-list { display: flex; flex-direction: column; gap: 1rem; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.25rem; }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+    .name { font-size: 1.1rem; font-weight: 600; color: #f1f5f9; }
+    .email { font-size: 0.85rem; color: #818cf8; margin-top: 0.2rem; }
+    .delete-btn { padding: 0.4rem 0.8rem; background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: background 0.2s; }
+    .delete-btn:hover { background: rgba(239, 68, 68, 0.2); }
+    .message { font-size: 0.95rem; line-height: 1.5; color: #cbd5e1; white-space: pre-wrap; margin-bottom: 0.75rem; padding: 0.75rem; background: #0f172a; border-radius: 8px; }
+    .date { font-size: 0.75rem; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Contact Submissions</h1>
+        <p style="color:#94a3b8;font-size:0.85rem;margin-top:0.25rem;">Admin portal dashboard</p>
+      </div>
+      <div class="actions">
+        <a href="/" class="btn btn-secondary">← Portfolio</a>
+        <button id="logout-btn" class="btn btn-danger">Logout</button>
+      </div>
+    </header>
 
-    const res = await fetch('/api/admin/submissions');
-    if (res.status === 401) {
-      window.location.href = '/admin/login';
-      return;
-    }
+    <div id="status" class="status-box">Loading submissions…</div>
+    <div id="empty" class="status-box" hidden>No contact form submissions found.</div>
+    <div id="list" class="card-list"></div>
+  </div>
 
-    const data = await res.json() as any;
-    if (status) status.hidden = true;
+  <script>
+    async function loadSubmissions() {
+      const status = document.getElementById('status') as HTMLElement | null;
+      const list = document.getElementById('list') as HTMLElement | null;
+      const empty = document.getElementById('empty') as HTMLElement | null;
 
-    if (!data.submissions || data.submissions.length === 0) {
-      if (empty) empty.hidden = false;
-      return;
-    }
-
-    for (const s of data.submissions) {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.id = 'sub-' + s.id;
-      card.innerHTML =
-        '<div class="card-header">' +
-          '<div>' +
-            '<div class="name">' + s.name + '</div>' +
-            '<div class="email">' + s.email + '</div>' +
-          '</div>' +
-          '<button class="delete-btn" data-id="' + s.id + '">Delete</button>' +
-        '</div>' +
-        '<div class="message">' + s.message + '</div>' +
-        '<div class="date">' + new Date(s.submitted_at).toLocaleString() + '</div>';
-      if (list) list.appendChild(card);
-    }
-
-    if (list) {
-      list.addEventListener('click', async (e) => {
-        const target = e.target as HTMLElement;
-        const btn = target.closest('.delete-btn') as HTMLElement | null;
-        if (!btn) return;
-        const id = btn.dataset.id;
-        btn.textContent = '…';
-        const delRes = await fetch('/api/admin/submissions/' + id, { method: 'DELETE' });
-        if (delRes.ok) {
-          document.getElementById('sub-' + id)?.remove();
-          if (list.children.length === 0 && empty) empty.hidden = false;
+      try {
+        const res = await fetch('/api/admin/submissions');
+        if (res.status === 401) {
+          window.location.href = '/admin/login';
+          return;
         }
-      });
+
+        const data = await res.json() as any;
+        if (status) status.hidden = true;
+
+        if (!data.submissions || data.submissions.length === 0) {
+          if (empty) empty.hidden = false;
+          return;
+        }
+
+        for (const s of data.submissions) {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.id = 'sub-' + s.id;
+          card.innerHTML =
+            '<div class="card-header">' +
+              '<div>' +
+                '<div class="name">' + s.name + '</div>' +
+                '<div class="email">' + s.email + '</div>' +
+              '</div>' +
+              '<button class="delete-btn" data-id="' + s.id + '">Delete</button>' +
+            '</div>' +
+            '<div class="message">' + s.message + '</div>' +
+            '<div class="date">' + new Date(s.submitted_at).toLocaleString() + '</div>';
+          if (list) list.appendChild(card);
+        }
+
+        if (list) {
+          list.addEventListener('click', async (e) => {
+            const target = e.target as HTMLElement;
+            const btn = target.closest('.delete-btn') as HTMLElement | null;
+            if (!btn) return;
+            const id = btn.dataset.id;
+            btn.textContent = '…';
+            const delRes = await fetch('/api/admin/submissions/' + id, { method: 'DELETE' });
+            if (delRes.ok) {
+              document.getElementById('sub-' + id)?.remove();
+              if (list.children.length === 0 && empty) empty.hidden = false;
+            }
+          });
+        }
+      } catch {
+        if (status) status.textContent = 'Failed to load submissions.';
+      }
     }
-  }
 
-  document.getElementById('logout-btn')?.addEventListener('click', async () => {
-    await fetch('/api/admin/logout', { method: 'POST' });
-    window.location.href = '/admin/login';
-  });
+    document.getElementById('logout-btn')?.addEventListener('click', async () => {
+      await fetch('/api/admin/logout', { method: 'POST' });
+      window.location.href = '/admin/login';
+    });
 
-  loadSubmissions();
-</script>
+    loadSubmissions();
+  </script>
+</body>
+</html>

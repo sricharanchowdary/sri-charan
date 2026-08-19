@@ -1,31 +1,78 @@
-<script>
-  const form = document.getElementById('login-form');
-  const btn = document.getElementById('btn');
-  const error = document.getElementById('error');
-  const passwordInput = document.getElementById('password');
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login — Sri Charan</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #0f172a; font-family: system-ui, -apple-system, sans-serif; color: #f1f5f9; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 2.5rem; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    h1 { color: #f1f5f9; font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+    p.subtitle { color: #94a3b8; font-size: 0.9rem; margin-bottom: 1.75rem; }
+    label { display: block; color: #94a3b8; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.5rem; }
+    input { width: 100%; padding: 0.75rem 1rem; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #f1f5f9; font-size: 1rem; margin-bottom: 1.25rem; transition: border-color 0.2s; }
+    input:focus { outline: none; border-color: #6366f1; }
+    button { width: 100%; padding: 0.75rem; background: #6366f1; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #4f46e5; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    #error { color: #f87171; font-size: 0.85rem; margin-top: 1rem; text-align: center; background: rgba(248, 113, 113, 0.1); padding: 0.5rem; border-radius: 6px; }
+    .back-link { display: block; text-align: center; margin-top: 1.5rem; color: #94a3b8; font-size: 0.85rem; text-decoration: none; }
+    .back-link:hover { color: #f1f5f9; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Admin Portal</h1>
+    <p class="subtitle">Enter your admin password to view submissions.</p>
+    <form id="login-form">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="••••••••••••" required />
+      <button type="submit" id="btn">Login</button>
+      <p id="error" hidden>Incorrect password. Try again.</p>
+    </form>
+    <a href="/" class="back-link">← Back to Portfolio</a>
+  </div>
 
-  if (form && btn && error && passwordInput) {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+  <script>
+    const form = document.getElementById('login-form');
+    const btn = document.getElementById('btn') as HTMLButtonElement | null;
+    const error = document.getElementById('error') as HTMLElement | null;
+    const passwordInput = document.getElementById('password') as HTMLInputElement | null;
 
-      const password = (passwordInput as HTMLInputElement).value;
-      btn.textContent = 'Logging in…';
-      btn.setAttribute('disabled', 'true');
-      error.hidden = true;
+    if (form && btn && error && passwordInput) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        const password = passwordInput.value;
+        btn.textContent = 'Logging in…';
+        btn.setAttribute('disabled', 'true');
+        error.hidden = true;
+
+        try {
+          const res = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password }),
+          });
+
+          if (res.ok) {
+            window.location.href = '/admin';
+          } else {
+            error.hidden = false;
+            btn.textContent = 'Login';
+            btn.removeAttribute('disabled');
+          }
+        } catch {
+          error.hidden = false;
+          error.textContent = 'Connection error. Please try again.';
+          btn.textContent = 'Login';
+          btn.removeAttribute('disabled');
+        }
       });
-
-      if (res.ok) {
-        window.location.href = '/admin';
-      } else {
-        error.hidden = false;
-        btn.textContent = 'Login';
-        btn.removeAttribute('disabled');
-      }
-    });
-  }
-</script>
+    }
+  </script>
+</body>
+</html>
