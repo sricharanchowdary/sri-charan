@@ -1,6 +1,9 @@
 name: CI
+
 on:
   pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
@@ -11,11 +14,12 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Check, test, and build
+  test:
+    name: Unit & E2E Automated Tests
     runs-on: ubuntu-latest
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      CI: true
 
     steps:
       - name: Checkout repository
@@ -33,7 +37,7 @@ jobs:
       - name: Type-check Astro project
         run: npm run check
 
-      - name: Run tests
+      - name: Run Vitest unit tests
         run: npm run test:coverage
 
       - name: Upload coverage to Codecov
@@ -42,7 +46,21 @@ jobs:
         with:
           files: ./coverage/lcov.info
           token: ${{ env.CODECOV_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false
 
-      - name: Build
+      - name: Install Playwright browsers & OS dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright E2E tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright test report on failure
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Build Astro project
         run: npm run build
