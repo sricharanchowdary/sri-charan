@@ -100,4 +100,40 @@ describe('worker contact route', () => {
     );
     expect(response.status).toBe(400);
   });
+
+  it('returns weather data when OpenWeatherMap succeeds', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+      name: 'Hyderabad',
+      main: { temp: 28.5, feels_like: 31.0, humidity: 65 },
+      weather: [{ description: 'clear sky', icon: '01d' }],
+    }), { status: 200 })));
+
+    const response = await worker.fetch(
+      new Request('https://example.com/api/weather', { method: 'GET' }),
+      { ...baseEnv, WEATHER_API_KEY: 'test_weather_key' }
+    );
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data).toMatchObject({
+      ok: true,
+      fallback: false,
+      weather: { city: 'Hyderabad', temp: 28.5 },
+    });
+  });
+
+  it('returns fallback response when WEATHER_API_KEY is not configured', async () => {
+    const response = await worker.fetch(
+      new Request('https://example.com/api/weather', { method: 'GET' }),
+      { ...baseEnv }
+    );
+
+    expect(response.status).toBe(500);
+    const data = await response.json();
+    expect(data).toMatchObject({
+      ok: false,
+      fallback: true,
+      weather: { city: 'Hyderabad' },
+    });
+  });
 });
