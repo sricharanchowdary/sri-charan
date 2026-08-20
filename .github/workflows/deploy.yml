@@ -11,7 +11,6 @@ permissions:
   deployments: write
 
 concurrency:
-  # scope concurrency per branch/ref so different branches don't block each other
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
@@ -19,7 +18,6 @@ jobs:
   deploy:
     name: Deploy to Cloudflare Workers
     runs-on: ubuntu-latest
-    # increase timeout to tolerate slow deploys / retries
     timeout-minutes: 30
 
     steps:
@@ -38,38 +36,41 @@ jobs:
       - name: Type-check Astro project
         run: npm run check
 
-      - name: Run tests
+      - name: Run unit & integration tests
         run: npm run test:coverage
 
       - name: Build site
         run: npm run build
 
-      - name: Ensure CLOUDFLARE_API_TOKEN exists
-        if: ${{ !secrets.CLOUDFLARE_API_TOKEN }}
-        run: |
-          echo "CLOUDFLARE_API_TOKEN is not set. Set the secret in the repo settings."
-          exit 1
-
       - name: Deploy with Wrangler (retry on transient failures)
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          set -euo pipefail
-          # try up to 3 times with exponential backoff for transient Cloudflare errors
+          set -uo pipefail
+
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN secret is not configured in GitHub repository secrets. Please add it under Repository Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+          echo "Cloudflare Wrangler version:"
           npx wrangler --version
-          for i in 1 2 3; do
-            echo "Attempt $i to deploy..."
-            if npx wrangler deploy --verbose; then
-              echo "Deploy succeeded on attempt $i"
+
+          max_attempts=3
+          for attempt in $(seq 1 $max_attempts); do
+            echo "=== Deploy attempt $attempt of $max_attempts ==="
+            if npx wrangler deploy; then
+              echo "✅ Deployment succeeded on attempt $attempt"
               exit 0
             else
-              echo "Deploy failed on attempt $i"
-              if [ "$i" -lt 3 ]; then
-                sleep_time=$((i * 10))
+              echo "⚠️ Deploy failed on attempt $attempt"
+              if [ "$attempt" -lt "$max_attempts" ]; then
+                sleep_time=$((attempt * 10))
                 echo "Sleeping $sleep_time seconds before retry..."
                 sleep $sleep_time
               else
-                echo "All deploy attempts failed."
+                echo "❌ All $max_attempts deploy attempts failed."
                 exit 1
               fi
             fi
