@@ -5,7 +5,7 @@ are final.
 
 ## Needs Your Real Values
 
-- Portfolio live URL: `https://sri-charan-portfolio.sricharanchowdary2005.workers.dev`
+- Portfolio live URL: `https://sricharanchowdary.sricharanchowdary2005.workers.dev`
 - GitHub repository: set `PUBLIC_REPO_URL` (repository set to `https://github.com/sricharanchowdary/sri-charan` in `.env.example`)
 - Public email: set `PUBLIC_CONTACT_EMAIL`
 - Retinal project repo: currently hidden until a real URL is added in `src/data/site.ts`

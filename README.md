@@ -3,7 +3,7 @@
 ![CI](https://github.com/sricharanchowdary/sri-charan/actions/workflows/ci.yml/badge.svg)
 ![Deploy](https://github.com/sricharanchowdary/sri-charan/actions/workflows/deploy.yml/badge.svg)
 
-Live site: https://sri-charan-portfolio.sricharanchowdary2005.workers.dev
+Live site: https://sricharanchowdary.sricharanchowdary2005.workers.dev
 Repository: [sricharanchowdary/sri-charan](https://github.com/sricharanchowdary/sri-charan)
 ## Stack
 
