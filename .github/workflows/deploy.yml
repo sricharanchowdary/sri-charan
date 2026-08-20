@@ -11,14 +11,16 @@ permissions:
   deployments: write
 
 concurrency:
-  group: deploy-production
+  # scope concurrency per branch/ref so different branches don't block each other
+  group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   deploy:
     name: Deploy to Cloudflare Workers
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # increase timeout to tolerate slow deploys / retries
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
@@ -42,8 +44,33 @@ jobs:
       - name: Build site
         run: npm run build
 
-      - name: Deploy with Wrangler
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          command: deploy
+      - name: Ensure CLOUDFLARE_API_TOKEN exists
+        if: ${{ !secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          echo "CLOUDFLARE_API_TOKEN is not set. Set the secret in the repo settings."
+          exit 1
+
+      - name: Deploy with Wrangler (retry on transient failures)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          # try up to 3 times with exponential backoff for transient Cloudflare errors
+          npx wrangler --version
+          for i in 1 2 3; do
+            echo "Attempt $i to deploy..."
+            if npx wrangler deploy --verbose; then
+              echo "Deploy succeeded on attempt $i"
+              exit 0
+            else
+              echo "Deploy failed on attempt $i"
+              if [ "$i" -lt 3 ]; then
+                sleep_time=$((i * 10))
+                echo "Sleeping $sleep_time seconds before retry..."
+                sleep $sleep_time
+              else
+                echo "All deploy attempts failed."
+                exit 1
+              fi
+            fi
+          done
