@@ -95,3 +95,19 @@ Configured in [`.github/workflows/ci.yml`](./.github/workflows/ci.yml):
   8. `npm run build` (production build verification).
 
 **Merge Blocking**: Any failing unit test or E2E test exits with code `1`, immediately failing the PR check and blocking the merge.
+
+---
+
+## 6. What is NOT Covered (and Rationales)
+
+While test coverage is comprehensive across core user journeys, certain external and complex flows are deliberately excluded from automated E2E testing:
+
+1. **Live Cloudflare Workers AI Token Consumption in E2E**:
+   - *Rationale*: Invoking live LLM inference (`@cf/meta/llama-3.2-3b-instruct`) in every CI pipeline run causes rate limiting, unmetered token consumption, non-deterministic latency, and potential flaky test failures due to generative text variations. LLM behavior is instead verified via the 20 deterministic evaluation benchmarks in `tests/evals.test.ts` with streaming contract checks.
+2. **Third-Party OpenWeatherMap Network Flakiness**:
+   - *Rationale*: E2E tests avoid relying on live external weather API uptime. API contract resilience and timeout fallbacks (5-second `AbortController`) are rigorously tested in Vitest isolation (`tests/worker.test.ts`).
+3. **Multi-Browser WebKit/Firefox Matrix in PR CI**:
+   - *Rationale*: CI execution runs on Chromium to keep pull request build times under 45 seconds while ensuring rapid feedback loops. Full cross-browser matrix testing is reserved for release pipelines.
+4. **Production D1 Cloud Database Mutations**:
+   - *Rationale*: CI pipelines avoid mutating persistent production databases. Local mock state and test fixtures validate SQL transactions safely.
+

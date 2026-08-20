@@ -49,3 +49,7 @@ Current approach works fine at low volume. At scale would:
 - Add `LIMIT`/`OFFSET` pagination on the admin list
 - Add an index on `submitted_at` for faster sorting
 - Archive soft-deleted rows to a separate table periodically
+
+## Extension 5 — Automated Testing Scope & E2E Boundary Decisions
+
+We chose to focus Playwright end-to-end testing strictly on core browser-dependent user journeys: **dark mode preference persistence in `localStorage`**, **contact form UI validation feedback and reset behavior**, and the **clipboard copy button**. Complex asynchronous flows—such as live Cloudflare Workers AI token streaming, live third-party OpenWeatherMap API network fetching, and production D1 database writes—were deliberately excluded from the browser E2E suite. Running live LLM inference and unmetered third-party APIs inside CI introduces severe test flakiness, latency bottlenecks, and non-deterministic response variations. Instead, we adopted an API contract-testing strategy using `page.route` network interception in Playwright and comprehensive in-memory Vitest suites (`tests/evals.test.ts`, `tests/worker.test.ts`, and `tests/security.test.ts`). This guarantees fast (<45s), zero-cost, deterministic CI runs that reliably catch real regressions.

@@ -153,3 +153,45 @@ sequenceDiagram
         W-->>B: 200 JSON { ok: true, message: "Thanks..." }
     end
 ```
+
+## 6. Pull Request CI Pipeline & Merge Blocking Flow
+
+```mermaid
+sequenceDiagram
+    actor Dev as Developer
+    participant GH as GitHub Repository (PR)
+    participant GHA as GitHub Actions Runner (Ubuntu)
+    participant Astro as Astro Check / TypeCheck
+    participant Vitest as Vitest (Unit / Security / Evals)
+    participant PW as Playwright (Browser E2E)
+    participant WebServer as Astro Dev Server (localhost:4321)
+
+    Dev->>GH: Push commit / Open Pull Request
+    GH->>GHA: Trigger .github/workflows/ci.yml (pull_request)
+    
+    Note over GHA: Setup Environment (Node 22, npm ci)
+    
+    GHA->>Astro: npm run check
+    Astro-->>GHA: 0 errors, 0 warnings (Exit Code: 0)
+
+    GHA->>Vitest: npm run test:coverage
+    Vitest-->>GHA: 50 passed (50) (Exit Code: 0)
+
+    GHA->>PW: npm run test:e2e
+    PW->>WebServer: Launch dev server on http://localhost:4321
+    WebServer-->>PW: Dev server ready (200 OK)
+
+    alt Scenario A: All Tests Pass (Happy Path)
+        PW->>PW: Run portfolio.spec.ts & copy-email.spec.ts
+        PW-->>GHA: 3 passed (Exit Code: 0)
+        GHA->>GH: Report Status Check: SUCCESS (✅)
+        GH-->>Dev: Branch Protection: Merge Pull Request Allowed
+    else Scenario B: Any Test Fails (Regression / Merge Blocked)
+        PW->>PW: Assert failure (e.g., element not found or assertion mismatch)
+        PW-->>GHA: 1 failed (Exit Code: 1)
+        GHA->>GHA: Upload playwright-report/ artifact
+        GHA->>GH: Report Status Check: FAILURE (❌)
+        GH-->>Dev: Branch Protection: MERGE BLOCKED (Required checks failed)
+    end
+```
+
