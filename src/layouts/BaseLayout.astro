@@ -151,16 +151,40 @@ const analyticsConfig = analyticsToken ? JSON.stringify({ token: analyticsToken 
       });
 
       let chatOpen = false;
-      const chatHistory: { role: string; content: string }[] = [];
+      let isStreaming = false;
 
       function toggleChat() {
         chatOpen = !chatOpen;
         const chatWindow = document.getElementById('chat-window');
         const openIcon = document.getElementById('chat-icon-open');
         const closeIcon = document.getElementById('chat-icon-close');
+        const input = document.getElementById('chat-input') as HTMLInputElement | null;
+
         if (chatWindow) chatWindow.style.display = chatOpen ? 'block' : 'none';
         if (openIcon) openIcon.style.display = chatOpen ? 'none' : 'block';
         if (closeIcon) closeIcon.style.display = chatOpen ? 'block' : 'none';
+
+        if (chatOpen && input) {
+          setTimeout(() => input.focus(), 50);
+        }
+      }
+
+      document.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key === 'Escape' && chatOpen) {
+          toggleChat();
+        }
+      });
+
+      function formatMessageHtml(raw: string): string {
+        const escaped = raw
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+
+        // Auto-link relative /contact link and external https:// URLs
+        return escaped
+          .replace(/(\/contact)/g, '<a href="$1" style="color:var(--accent);font-weight:600;text-decoration:underline;">$1</a>')
+          .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noreferrer" style="color:var(--accent);font-weight:600;text-decoration:underline;">$1</a>');
       }
 
       function sendQuick(text: string) {
@@ -170,8 +194,11 @@ const analyticsConfig = analyticsToken ? JSON.stringify({ token: analyticsToken 
       }
 
       async function sendMessage() {
+        if (isStreaming) return;
+
         const input = document.getElementById('chat-input') as HTMLInputElement | null;
         const messages = document.getElementById('chat-messages');
+        const sendBtn = document.getElementById('chat-send') as HTMLButtonElement | null;
         if (!input || !messages) return;
 
         const text = input.value.trim();
@@ -181,37 +208,74 @@ const analyticsConfig = analyticsToken ? JSON.stringify({ token: analyticsToken 
         const qa = document.getElementById('quick-actions');
         if (qa) qa.style.display = 'none';
 
+        // Add user message to UI
         const userMsg = document.createElement('div');
-        userMsg.style.cssText = 'background:var(--accent);color:white;padding:10px 12px;border-radius:12px;font-size:14px;align-self:flex-end;max-width:80%;margin-left:auto;';
+        userMsg.style.cssText = 'background:var(--accent);color:white;padding:10px 12px;border-radius:12px;font-size:14px;align-self:flex-end;max-width:80%;margin-left:auto;word-break:break-word;';
         userMsg.textContent = text;
         messages.appendChild(userMsg);
 
-        const typing = document.createElement('div');
-        typing.style.cssText = 'background:var(--surface-muted);padding:10px 12px;border-radius:12px;font-size:14px;color:var(--muted);';
-        typing.textContent = 'Typing...';
-        messages.appendChild(typing);
+        // Add typing / assistant placeholder
+        const assistantMsg = document.createElement('div');
+        assistantMsg.style.cssText = 'background:var(--surface-muted);padding:10px 12px;border-radius:12px;font-size:14px;color:var(--muted);word-break:break-word;';
+        assistantMsg.textContent = 'Thinking...';
+        messages.appendChild(assistantMsg);
         messages.scrollTop = messages.scrollHeight;
 
-        chatHistory.push({ role: 'user', content: text });
+        isStreaming = true;
+        if (sendBtn) sendBtn.disabled = true;
 
         try {
-          const response = await fetch('/api/chat', {
+          const response = await fetch('/api/resume-chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: chatHistory }),
+            body: JSON.stringify({ question: text }),
           });
 
-          const data = await response.json();
-          const reply = (data as any).reply || "I'm not sure about that. Try visiting the relevant page!";
-          chatHistory.push({ role: 'assistant', content: reply });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
 
-          typing.style.cssText = 'background:var(--surface-muted);padding:10px 12px;border-radius:12px;font-size:14px;color:var(--text);';
-          typing.textContent = reply;
+          const reader = response.body?.getReader();
+          if (!reader) throw new Error('No readable stream');
+
+          const decoder = new TextDecoder();
+          let fullReply = '';
+          assistantMsg.textContent = '';
+          assistantMsg.style.color = 'var(--text)';
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+              if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                try {
+                  const json = JSON.parse(line.replace('data: ', ''));
+                  if (json.response) {
+                    fullReply += json.response;
+                    assistantMsg.innerHTML = formatMessageHtml(fullReply);
+                    messages.scrollTop = messages.scrollHeight;
+                  }
+                } catch {
+                  // ignore non-json SSE chunks
+                }
+              }
+            }
+          }
+
+          if (!fullReply.trim()) {
+            assistantMsg.textContent = "I'm not sure about that. Try visiting /contact for more details!";
+          }
         } catch {
-          typing.textContent = 'Sorry, I had trouble connecting. Please try again!';
+          assistantMsg.textContent = 'Sorry, I had trouble connecting. Please try again!';
+        } finally {
+          isStreaming = false;
+          if (sendBtn) sendBtn.disabled = false;
+          messages.scrollTop = messages.scrollHeight;
         }
-
-        messages.scrollTop = messages.scrollHeight;
       }
 
       document.getElementById('chat-toggle')?.addEventListener('click', toggleChat);
