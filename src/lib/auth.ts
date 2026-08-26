@@ -1,5 +1,4 @@
 import type { UserRecord, SessionRecord, AuthSessionValidation } from '../types/academy-db';
-import { upsertUser } from './academy-service';
 
 export const SESSION_COOKIE_NAME = 'app_session';
 export const OAUTH_STATE_COOKIE = 'github_oauth_state';

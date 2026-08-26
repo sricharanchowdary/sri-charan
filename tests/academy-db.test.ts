@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   upsertUser,
-  getUser,
   recordLessonCompletion,
-  getUserCompletions,
   recordExamAttempt,
   issueCertificate,
   getCertificateBySerial,

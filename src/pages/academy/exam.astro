@@ -3,13 +3,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { site } from '../../data/site';
 import { getPublicExamQuestions } from '../../lib/exam-engine';
 
-const user = Astro.locals.user || {
-  id: 'usr_demo',
-  name: 'Candidate Engineer',
-  email: 'engineer@example.com',
-  provider: 'github',
-};
-
 const title = `AI Security Certification Exam - ${site.name}`;
 const description = 'Official certification assessment for AI AppSec, prompt guardrails, and secure LLM architecture.';
 

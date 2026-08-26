@@ -7,7 +7,6 @@ import {
   getGitHubAuthorizationUrl,
   buildCookieHeader,
   SESSION_COOKIE_NAME,
-  OAUTH_STATE_COOKIE,
   SESSION_DURATION_MS,
 } from '../src/lib/auth';
 
