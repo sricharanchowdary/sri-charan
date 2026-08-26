@@ -5,7 +5,7 @@ test.describe('Exam Submission & Dynamic Certificate Verification Portal', () =>
     // Navigate to a valid serial verification URL
     await page.goto('/verify/IA-SEC-8942A');
 
-    await expect(page.locator('h1')).toContainText('Credential Verification Registry');
+    await expect(page.locator('main h1')).toContainText('Credential Verification Registry');
     await expect(page.locator('text=Certificate of Competency')).toBeVisible();
     await expect(page.locator('text=IA-SEC-8942A')).toBeVisible();
     await expect(page.locator('text=ACTIVE & VERIFIED')).toBeVisible();
@@ -16,7 +16,7 @@ test.describe('Exam Submission & Dynamic Certificate Verification Portal', () =>
     // Navigate to an invalid/non-existent serial
     await page.goto('/verify/INVALID_SERIAL_123');
 
-    await expect(page.locator('h1')).toContainText('Certificate Not Found or Revoked');
+    await expect(page.locator('main h1')).toContainText('Certificate Not Found or Revoked');
     await expect(page.locator('text=INVALID_SERIAL_123')).toBeVisible();
   });
 });
