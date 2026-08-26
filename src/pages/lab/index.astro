@@ -1,0 +1,241 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { site } from '../../data/site';
+
+const labs = [
+  {
+    id: 'prompt-injection',
+    title: 'Lab 01: Prompt Injection & Guardrail Bypass',
+    status: 'Active',
+    difficulty: 'Beginner / Intermediate',
+    href: '/lab/live/prompt-injection',
+    icon: '⚡',
+    badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    summary: 'Interactive security sandbox to test and evaluate edge heuristic guardrails against adversarial LLM prompts.',
+    concepts: ['Adversarial Override', 'Zero-Cost Edge Drop', 'Input Delimiters', 'GPU Cost Optimization'],
+    actionText: 'Launch Live Sandbox',
+    isLive: true,
+  },
+  {
+    id: 'markdown-exfiltration',
+    title: 'Lab 02: Markdown Injection & Exfiltration Defense',
+    status: 'Interactive Sim',
+    difficulty: 'Intermediate',
+    href: '/lab/live/prompt-injection',
+    icon: '🔍',
+    badgeClass: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+    summary: 'Test image callback payloads (![pixel](https://attacker.com)) designed to steal conversation history, and verify CSP defense.',
+    concepts: ['Image Callback Stealing', 'CSP Nonce Validation', 'Hyperlink Masking', 'Output Sanitization'],
+    actionText: 'Explore Defense Sandbox',
+    isLive: false,
+  },
+  {
+    id: 'streaming-redaction',
+    title: 'Lab 03: Streaming SSE Guardrails & Redaction',
+    status: 'Interactive Sim',
+    difficulty: 'Intermediate / Advanced',
+    href: '/lab/live/prompt-injection',
+    icon: '🛡️',
+    badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    summary: 'Analyze how Cloudflare Workers TransformStream buffers chunked tokens in real-time to redact system prompt leaks before client delivery.',
+    concepts: ['TransformStream Filter', 'Chunk Boundary Scanning', 'Token Buffering', 'Deterministic Fallback'],
+    actionText: 'Explore Defense Sandbox',
+    isLive: false,
+  },
+  {
+    id: 'jailbreak-personas',
+    title: 'Lab 04: Roleplay & Persona Jailbreak Defense',
+    status: 'Interactive Sim',
+    difficulty: 'Advanced',
+    href: '/lab/live/prompt-injection',
+    icon: '🎯',
+    badgeClass: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+    summary: 'Evaluate multi-turn adversarial persona shifts ("DAN", "Developer Mode", "Hypothetical Scenario") against 8 core system prompt rules.',
+    concepts: ['DAN Persona Detection', 'Hypothetical Framing', '8 Security Directives', 'Tone Refusal'],
+    actionText: 'Explore Defense Sandbox',
+    isLive: false,
+  },
+];
+---
+
+<BaseLayout
+  title={`Security Labs & Sandboxes - ${site.name}`}
+  description="Hands-on interactive security sandboxes to test adversarial attacks, prompt injections, guardrails, and LLM defenses."
+>
+  <div class="mx-auto max-w-5xl py-4">
+    <!-- Header Section -->
+    <header class="flex flex-col gap-4 border-b border-[var(--border)] pb-8 md:flex-row md:items-end md:justify-between">
+      <div class="max-w-3xl">
+        <div class="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1 text-xs font-semibold text-[var(--accent)]">
+          <span>⚡</span> Hands-on Security Sandboxes
+        </div>
+        <h1 class="mt-4 text-4xl font-bold tracking-tight sm:text-5xl text-[var(--text)]">
+          Security & AI Labs
+        </h1>
+        <p class="mt-4 text-lg text-[var(--muted)]">
+          Interactive, browser-based sandboxes for evaluating prompt injection vulnerabilities, defensive edge guardrails, and real-time LLM inspection.
+        </p>
+      </div>
+
+      <!-- Quick Action Navigation -->
+      <div class="flex flex-wrap items-center gap-3">
+        <a
+          href="/academy"
+          class="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-xs font-bold text-[var(--text)] hover:bg-[var(--surface-muted)] hover:border-[var(--accent)] transition-all"
+        >
+          <span>📚</span>
+          <span>Security Academy</span>
+        </a>
+        <a
+          href="/academy/exam"
+          class="inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-4 py-2.5 text-xs font-bold text-white shadow-md hover:opacity-90 transition-all active:scale-95"
+        >
+          <span>🛡️</span>
+          <span>Certification Exam</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Featured Live Lab Banner -->
+    <section class="mt-10 overflow-hidden rounded-2xl border border-[var(--accent)]/40 bg-gradient-to-br from-[var(--surface)] via-[var(--surface)] to-[var(--accent)]/10 p-6 sm:p-8 shadow-xl">
+      <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div class="max-w-2xl">
+          <div class="flex items-center gap-2">
+            <span class="relative flex h-3 w-3">
+              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex h-3 w-3 rounded-full bg-emerald-500"></span>
+            </span>
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Featured Active Sandbox</span>
+          </div>
+          <h2 class="mt-3 text-2xl font-bold text-[var(--text)] sm:text-3xl">
+            Live Lab: Edge Prompt Injection Defense
+          </h2>
+          <p class="mt-3 text-sm leading-relaxed text-[var(--muted)]">
+            Test real adversarial payloads against our production Cloudflare Worker guardrails. Observe pre-inference pattern matching, zero-cost edge drops, and streaming token redaction in real time.
+          </p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <span class="rounded-lg bg-[var(--surface-muted)] px-2.5 py-1 text-xs font-mono text-[var(--muted)]">POST /api/resume-chat</span>
+            <span class="rounded-lg bg-[var(--surface-muted)] px-2.5 py-1 text-xs font-medium text-[var(--muted)]">Workers AI LLaMA-3.2</span>
+            <span class="rounded-lg bg-[var(--surface-muted)] px-2.5 py-1 text-xs font-medium text-[var(--muted)]">Zero-Cost Drop</span>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3 sm:flex-row lg:flex-col">
+          <a
+            href="/lab/live/prompt-injection"
+            class="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-6 py-3.5 text-sm font-bold text-white shadow-lg hover:opacity-90 transition-all active:scale-95"
+          >
+            <span>Launch Live Sandbox</span>
+            <span>🚀</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lab Challenges Grid -->
+    <section class="mt-12">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-[var(--text)]">Lab Challenges & Experiments</h2>
+          <p class="mt-1 text-sm text-[var(--muted)]">
+            Explore hands-on challenges and live threat scenarios designed to build defensive AI instincts.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 grid gap-6 md:grid-cols-2">
+        {labs.map((lab) => (
+          <article class="flex flex-col justify-between rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 transition-all hover:border-[var(--accent)] hover:shadow-xl">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="text-3xl">{lab.icon}</span>
+                <div class="flex items-center gap-2">
+                  <span class={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${lab.badgeClass}`}>
+                    {lab.status}
+                  </span>
+                  <span class="rounded-full bg-[var(--surface-muted)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--muted)]">
+                    {lab.difficulty}
+                  </span>
+                </div>
+              </div>
+
+              <h3 class="mt-4 text-xl font-bold text-[var(--text)]">{lab.title}</h3>
+              <p class="mt-2 text-sm leading-relaxed text-[var(--muted)]">{lab.summary}</p>
+
+              <div class="mt-4">
+                <p class="text-xs font-semibold uppercase tracking-wider text-[var(--accent)]">Key Concepts Practiced</p>
+                <div class="mt-2 flex flex-wrap gap-1.5">
+                  {lab.concepts.map((concept) => (
+                    <span class="rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-2 py-0.5 text-xs text-[var(--muted)]">
+                      {concept}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 border-t border-[var(--border)] pt-4">
+              <a
+                href={lab.href}
+                class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--surface-muted)] px-4 py-2.5 text-xs font-bold text-[var(--text)] hover:bg-[var(--accent)] hover:text-white border border-[var(--border)] hover:border-transparent transition-all"
+              >
+                <span>{lab.actionText}</span>
+                <span>&rarr;</span>
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <!-- Lab Architecture Info Card -->
+    <section class="mt-14 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 sm:p-8">
+      <div class="max-w-3xl">
+        <h2 class="text-2xl font-bold text-[var(--text)]">🔬 How Lab Verification Works</h2>
+        <p class="mt-2 text-sm text-[var(--muted)]">
+          All lab evaluations run directly on the Cloudflare edge network, combining low-latency heuristics with isolated inference.
+        </p>
+
+        <div class="mt-6 grid gap-4 sm:grid-cols-3">
+          <div class="rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-4">
+            <span class="text-2xl">⚡</span>
+            <h3 class="mt-2 font-bold text-sm text-[var(--text)]">&lt; 5ms Edge Rejection</h3>
+            <p class="mt-1 text-xs text-[var(--muted)]">
+              Adversarial inputs are intercepted before hitting GPU models, eliminating unnecessary LLM compute costs.
+            </p>
+          </div>
+          <div class="rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-4">
+            <span class="text-2xl">🔄</span>
+            <h3 class="mt-2 font-bold text-sm text-[var(--text)]">SSE Stream Redaction</h3>
+            <p class="mt-1 text-xs text-[var(--muted)]">
+              Output streams are parsed chunk-by-chunk with TransformStreams to prevent leaked instructions from reaching users.
+            </p>
+          </div>
+          <div class="rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-4">
+            <span class="text-2xl">📜</span>
+            <h3 class="mt-2 font-bold text-sm text-[var(--text)]">Verifiable Credentials</h3>
+            <p class="mt-1 text-xs text-[var(--muted)]">
+              Completing labs and passing the assessment issues a cryptographically verifiable completion certificate.
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-8 flex flex-wrap items-center gap-4">
+          <a
+            href="/academy/exam"
+            class="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-all active:scale-95"
+          >
+            <span>Take Certification Exam</span>
+            <span>&rarr;</span>
+          </a>
+          <a
+            href="/academy"
+            class="inline-flex items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] px-5 py-2.5 text-sm font-semibold text-[var(--text)] hover:bg-[var(--surface-muted)] transition-all"
+          >
+            Review Academy Lessons
+          </a>
+        </div>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

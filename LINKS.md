@@ -28,6 +28,11 @@ matches the local `origin` remote and is the final repository URL.
 - `/blog`
 - `/blog/medical-image-pipeline`
 - `/blog/shipping-a-small-portfolio`
+- `/academy`
+- `/academy/exam`
+- `/lab`
+- `/lab/live/prompt-injection`
+- `/verify`
 - `/contact`
 - `/rss.xml`
 

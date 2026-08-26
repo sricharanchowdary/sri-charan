@@ -136,4 +136,72 @@ describe('worker contact route', () => {
       weather: { city: 'Hyderabad' },
     });
   });
+
+  it('handles /api/academy/certificate/:serial lookup', async () => {
+    const certDB = {
+      prepare: vi.fn(() => ({
+        bind: vi.fn(() => ({
+          first: vi.fn(async () => ({
+            id: 'cert_123',
+            user_id: 'usr_123',
+            serial_number: 'SEC-2026-A1B2C',
+            issued_at: '2026-08-24T00:00:00Z',
+            track_name: 'AI Security Engineering',
+            metadata: JSON.stringify({ score_percentage: 98.5, verification_hash: 'hash123', issuer: 'Academy' }),
+          })),
+        })),
+      })),
+    } as any;
+
+    const response = await worker.fetch(
+      new Request('https://example.com/api/academy/certificate/SEC-2026-A1B2C', { method: 'GET' }),
+      { ...baseEnv, DB: certDB }
+    );
+
+    expect(response.status).toBe(200);
+    const data = (await response.json()) as any;
+    expect(data.ok).toBe(true);
+    expect(data.certificate.serial_number).toBe('SEC-2026-A1B2C');
+    expect(data.certificate.metadata.score_percentage).toBe(98.5);
+  });
+
+  it('returns 404 for non-existent certificate serial', async () => {
+    const emptyDB = {
+      prepare: vi.fn(() => ({
+        bind: vi.fn(() => ({
+          first: vi.fn(async () => null),
+        })),
+      })),
+    } as any;
+
+    const response = await worker.fetch(
+      new Request('https://example.com/api/academy/certificate/NONEXISTENT', { method: 'GET' }),
+      { ...baseEnv, DB: emptyDB }
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('returns lab challenges list from /api/academy/labs', async () => {
+    const labsDB = {
+      prepare: vi.fn(() => ({
+        all: vi.fn(async () => ({
+          results: [
+            { challenge_id: 'lab-01', title: 'Prompt Injection Defense', difficulty: 'beginner', created_at: '2026-08-24' },
+          ],
+        })),
+      })),
+    } as any;
+
+    const response = await worker.fetch(
+      new Request('https://example.com/api/academy/labs', { method: 'GET' }),
+      { ...baseEnv, DB: labsDB }
+    );
+
+    expect(response.status).toBe(200);
+    const data = (await response.json()) as any;
+    expect(data.ok).toBe(true);
+    expect(data.labs).toHaveLength(1);
+    expect(data.labs[0].challenge_id).toBe('lab-01');
+  });
 });

@@ -16,6 +16,7 @@ export const navItems = [
   { href: '/projects', label: 'Projects' },
   { href: '/blog', label: 'Blog' },
   { href: '/academy', label: 'Academy' },
+  { href: '/lab', label: 'Lab' },
   { href: '/contact', label: 'Contact' },
 ];
 

@@ -29,12 +29,16 @@ npx playwright show-report
 
 ## 2. Unit & Integration Tests (Vitest)
 
-Our Vitest suite covers **50 automated test cases** across 5 test files:
+Our Vitest suite covers **83 automated test cases** across 9 test files:
 
 - **`src/lib/contact.test.ts`**: Validates input sanitize/validation rules (name, email format, message length bounds, honeypot spam detection).
 - **`tests/contact.test.ts`**: Tests contact schema behavior, edge cases, and error formatting.
-- **`tests/worker.test.ts`**: Tests Cloudflare Worker endpoints (`/api/contact`, `/api/posts`, `/api/weather`, `/api/admin/*`, static asset fallbacks).
-- **`tests/security.test.ts`**: 11 adversarial tests validating prompt injection defense, zero-cost edge rejection, and system prompt leakage prevention.
+- **`tests/exam-engine.test.ts`**: Tests server-side exam scoring, question bank confidentiality, >= 80% passing thresholds, cryptographic serial generation, and `/api/exam/submit` integration.
+- **`tests/auth.test.ts`**: Tests GitHub OAuth token generation, D1 session persistence, rolling expiration renewals, logout invalidation, and secure cookie headers.
+- **`tests/flow-explorer.test.ts`**: Tests interactive sequence flow schemas, participant auto-discovery, geometry column offsets, and self-loop cases.
+- **`tests/academy-db.test.ts`**: Tests Cloudflare D1 user upserts, compound primary key completions, exam recording, and cryptographic SHA-256 certificate issuance.
+- **`tests/worker.test.ts`**: Tests Cloudflare Worker endpoints (`/api/contact`, `/api/posts`, `/api/weather`, `/api/admin/*`, `/api/academy/*`, `/api/exam/submit`, static asset fallbacks).
+- **`tests/security.test.ts`**: 16 adversarial tests validating prompt injection defense, zero-cost edge rejection, and system prompt leakage prevention.
 - **`tests/evals.test.ts`**: 20 evaluation test cases scoring accuracy, grounding, tone, and refusal behavior for the AI Résumé Chatbot.
 
 ---
@@ -42,6 +46,24 @@ Our Vitest suite covers **50 automated test cases** across 5 test files:
 ## 3. End-to-End Tests (Playwright)
 
 Located in the [`e2e/`](./e2e/) directory, configured in [`playwright.config.ts`](./playwright.config.ts) against the local Astro server (`http://localhost:4321`):
+
+### `e2e/auth-protected-routes.spec.ts`
+1. **Middleware Route Protection**:
+   - Asserts public read access to `/academy` without login redirect.
+   - Asserts public access to `/verify` certificate lookup without authentication.
+
+### `e2e/exam-and-verify.spec.ts`
+1. **Certificate Verification & Plaque Display**:
+   - Asserts valid serial numbers (e.g. `/verify/IA-SEC-8942A`) render the verified credential plaque, issue date, and SHA-256 seal.
+   - Asserts invalid serial numbers display the clean 404 "Certificate Not Found or Revoked" state.
+
+### `e2e/flow-explorer.spec.ts`
+1. **Interactive Stepper Navigation**:
+   - Locates `#oauth-flow` on `/academy`.
+   - Clicks **Next** (advancing from Step 1 to Step 2 and Step 3).
+   - Validates state changes, disabled/enabled button states, and direct dot navigation.
+   - Tests **Auto-play** toggle, countdown/pause states, and **Reset** button.
+   - Verifies clipboard copy button for code/payload snippets.
 
 ### `e2e/portfolio.spec.ts`
 1. **Dark Mode Toggle & State Persistence**:

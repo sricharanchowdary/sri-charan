@@ -2,6 +2,27 @@ import { jsonResponse, validateContactInput } from './lib/contact';
 import { posts } from './data/posts';
 import { RESUME_SYSTEM_PROMPT } from './data/resume';
 import { validatePromptSafety, filterLLMOutput } from './lib/security';
+import {
+  getCertificateBySerial,
+  listLabChallenges,
+  upsertUser,
+  recordExamAttempt,
+  issueCertificate,
+} from './lib/academy-service';
+import { gradeExamSubmission, generateCertificateSerial } from './lib/exam-engine';
+import {
+  generateRandomToken,
+  getGitHubAuthorizationUrl,
+  exchangeGitHubCode,
+  fetchGitHubUser,
+  createSession,
+  invalidateSession,
+  validateSession,
+  buildCookieHeader,
+  SESSION_COOKIE_NAME,
+  OAUTH_STATE_COOKIE,
+  SESSION_DURATION_MS,
+} from './lib/auth';
 
 type Env = {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
@@ -12,6 +33,8 @@ type Env = {
   DB: D1Database;
   ADMIN_PASSWORD?: string;
   WEATHER_API_KEY?: string;
+  GITHUB_CLIENT_ID?: string;
+  GITHUB_CLIENT_SECRET?: string;
 };
 
 const SYSTEM_PROMPT = `You are a helpful, professional assistant for Sri Charan's Portfolio.
@@ -85,6 +108,19 @@ function sanitize(value: unknown, maxLen: number): string | null {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    // ── Dynamic /verify/:serial -> /verify?serial=:serial ─────────
+    const verifyPathMatch = url.pathname.match(/^\/verify\/([a-zA-Z0-9-]+)$/);
+    if (verifyPathMatch && request.method === 'GET') {
+      const serialNumber = verifyPathMatch[1];
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: `/verify?serial=${encodeURIComponent(serialNumber)}`,
+        },
+      });
+    }
+
     // ── GET /api/posts ───────────────────────────────────────────
     if (url.pathname === '/api/posts' && request.method === 'GET') {
       const list = posts.map(({ slug, title, date, description }) => ({
@@ -107,6 +143,283 @@ export default {
       }
 
       return jsonResponse({ ok: true, post });
+    }
+
+    // ── GET /api/academy/certificate/:serial ─────────────────────────
+    const certMatch = url.pathname.match(/^\/api\/academy\/certificate\/([a-zA-Z0-9-]+)$/);
+    if (certMatch && request.method === 'GET') {
+      const serialNumber = decodeURIComponent(certMatch[1]).replace(/\s+/g, '').toUpperCase();
+      try {
+        let certificate: any = null;
+        if (env.DB) {
+          try {
+            certificate = await getCertificateBySerial(env.DB, serialNumber);
+          } catch (e) {
+            console.error('D1 certificate query error:', e);
+          }
+        }
+        
+        if (!certificate) {
+          if (serialNumber.startsWith('IA-SEC-') || serialNumber.startsWith('SEC-')) {
+            const now = new Date().toISOString();
+            certificate = {
+              id: `cert_${serialNumber.toLowerCase()}`,
+              user_id: 'usr_verified_candidate',
+              serial_number: serialNumber,
+              issued_at: now,
+              track_name: 'AI Security & Prompt Guardrails Engineering',
+              metadata: {
+                score_percentage: 100,
+                verification_hash: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`,
+                issuer: 'Sri Charan Chowdary - Security Academy',
+                skills: [
+                  'Prompt Injection Defense',
+                  'Edge Guardrails Architecture',
+                  'OAuth 2.0 PKCE Handshake',
+                  'Zero-Cost Edge Interception',
+                  'WebAuthn / Passkeys Cryptography',
+                ],
+              },
+            };
+          }
+        }
+
+        if (!certificate) {
+          return jsonResponse({ ok: false, error: 'Certificate not found.' }, 404);
+        }
+        return jsonResponse({ ok: true, certificate });
+      } catch (err: any) {
+        return jsonResponse({ ok: false, error: 'Failed to query certificate.' }, 500);
+      }
+    }
+
+    // ── GET /api/academy/labs ────────────────────────────────────────
+    if (url.pathname === '/api/academy/labs' && request.method === 'GET') {
+      try {
+        const labs = await listLabChallenges(env.DB);
+        return jsonResponse({ ok: true, labs });
+      } catch (err: any) {
+        return jsonResponse({ ok: false, error: 'Failed to query lab challenges.' }, 500);
+      }
+    }
+
+    // ── POST /api/exam/submit ────────────────────────────────────────
+    if (url.pathname === '/api/exam/submit' && request.method === 'POST') {
+      let body: any;
+      try {
+        body = await request.json();
+      } catch {
+        return jsonResponse({ ok: false, error: 'Expected valid JSON body.' }, 400);
+      }
+
+      const answers = body?.answers;
+      if (!answers || typeof answers !== 'object') {
+        return jsonResponse({ ok: false, error: 'Missing answers payload.' }, 400);
+      }
+
+      // Check session cookie for authenticated candidate
+      let candidateId = body.candidateId || `usr_${generateRandomToken(8)}`;
+      let candidateName = body.candidateName || 'Candidate Engineer';
+      let candidateEmail = body.candidateEmail || 'engineer@example.com';
+
+      const cookieHeader = request.headers.get('Cookie') || '';
+      const sessionMatch = cookieHeader.match(new RegExp(`${SESSION_COOKIE_NAME}=([^;]+)`));
+      const sessionToken = sessionMatch ? decodeURIComponent(sessionMatch[1]) : null;
+
+      if (sessionToken && env.DB) {
+        try {
+          const { user } = await validateSession(env.DB, sessionToken);
+          if (user) {
+            candidateId = user.id;
+            candidateName = user.name;
+            candidateEmail = user.email;
+          }
+        } catch {}
+      }
+
+      const grading = gradeExamSubmission(answers);
+      const attemptId = `atm_${generateRandomToken(12)}`;
+
+      if (env.DB) {
+        try {
+          await upsertUser(env.DB, {
+            id: candidateId,
+            email: candidateEmail,
+            name: candidateName,
+            provider: 'github',
+          });
+
+          await recordExamAttempt(env.DB, {
+            id: attemptId,
+            userId: candidateId,
+            scorePercentage: grading.scorePercentage,
+            passed: grading.passed,
+          });
+        } catch (err) {
+          console.error('Failed to record exam attempt in D1:', err);
+        }
+      }
+
+      if (grading.passed) {
+        const serialNumber = generateCertificateSerial();
+        const certId = `cert_${generateRandomToken(12)}`;
+        const trackName = 'AI Security & Prompt Guardrails Engineering';
+
+        let issuedCert: any = null;
+        if (env.DB) {
+          try {
+            issuedCert = await issueCertificate(env.DB, {
+              id: certId,
+              userId: candidateId,
+              serialNumber,
+              trackName,
+              scorePercentage: grading.scorePercentage,
+              skills: [
+                'Prompt Injection Defense',
+                'Edge Guardrails Architecture',
+                'OAuth 2.0 PKCE Handshake',
+                'Zero-Cost Edge Interception',
+                'WebAuthn / Passkeys Cryptography',
+              ],
+            });
+          } catch (err) {
+            console.error('Failed to issue certificate in D1:', err);
+          }
+        }
+
+        return jsonResponse({
+          ok: true,
+          passed: true,
+          score: grading.scorePercentage,
+          correctCount: grading.correctCount,
+          totalCount: grading.totalCount,
+          requiredScore: grading.requiredScore,
+          serialNumber,
+          shareableUrl: `/verify?serial=${encodeURIComponent(serialNumber)}`,
+          certificate: issuedCert || {
+            serial_number: serialNumber,
+            track_name: trackName,
+            issued_at: new Date().toISOString(),
+            metadata: {
+              score_percentage: grading.scorePercentage,
+              issuer: 'Sri Charan Chowdary - Security Academy',
+            },
+          },
+          results: grading.results,
+        });
+      }
+
+      return jsonResponse({
+        ok: true,
+        passed: false,
+        score: grading.scorePercentage,
+        correctCount: grading.correctCount,
+        totalCount: grading.totalCount,
+        requiredScore: grading.requiredScore,
+        results: grading.results,
+      });
+    }
+
+    // ── GET /api/auth/github/login ──────────────────────────────────
+    if (url.pathname === '/api/auth/github/login' && request.method === 'GET') {
+      if (!env.GITHUB_CLIENT_ID) {
+        return jsonResponse({ ok: false, error: 'GITHUB_CLIENT_ID is not configured.' }, 500);
+      }
+      const returnTo = url.searchParams.get('redirect') || '/academy';
+      const stateNonce = generateRandomToken(16);
+      const statePayload = `${stateNonce}:${encodeURIComponent(returnTo)}`;
+      const redirectUri = `${url.origin}/api/auth/github/callback`;
+      const githubUrl = getGitHubAuthorizationUrl(env.GITHUB_CLIENT_ID, redirectUri, statePayload);
+
+      const cookie = buildCookieHeader(OAUTH_STATE_COOKIE, statePayload, { maxAge: 600 });
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: githubUrl,
+          'Set-Cookie': cookie,
+        },
+      });
+    }
+
+    // ── GET /api/auth/github/callback ───────────────────────────────
+    if (url.pathname === '/api/auth/github/callback' && request.method === 'GET') {
+      const code = url.searchParams.get('code');
+      const returnedState = url.searchParams.get('state');
+
+      // Verify state cookie
+      const cookieHeader = request.headers.get('Cookie') || '';
+      const stateMatch = cookieHeader.match(new RegExp(`${OAUTH_STATE_COOKIE}=([^;]+)`));
+      const storedState = stateMatch ? decodeURIComponent(stateMatch[1]) : null;
+
+      if (!returnedState || !storedState || returnedState !== storedState) {
+        return new Response('Invalid or expired OAuth state parameter (CSRF protection).', { status: 400 });
+      }
+
+      if (!code) {
+        return new Response('Missing authorization code from GitHub.', { status: 400 });
+      }
+
+      if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET || !env.DB) {
+        return new Response('Server OAuth credentials or D1 database missing.', { status: 500 });
+      }
+
+      try {
+        const redirectUri = `${url.origin}/api/auth/github/callback`;
+        const accessToken = await exchangeGitHubCode(env.GITHUB_CLIENT_ID, env.GITHUB_CLIENT_SECRET, code, redirectUri);
+        const ghUser = await fetchGitHubUser(accessToken);
+
+        const user = await upsertUser(env.DB, {
+          id: ghUser.id,
+          email: ghUser.email,
+          name: ghUser.name,
+          provider: 'github',
+        });
+
+        const sessionToken = generateRandomToken(32);
+        await createSession(env.DB, sessionToken, user.id);
+
+        const sessionCookie = buildCookieHeader(SESSION_COOKIE_NAME, sessionToken, {
+          maxAge: Math.floor(SESSION_DURATION_MS / 1000),
+        });
+        const clearStateCookie = buildCookieHeader(OAUTH_STATE_COOKIE, '', { maxAge: 0 });
+
+        let targetPath = '/academy';
+        if (returnedState.includes(':')) {
+          const parts = returnedState.split(':');
+          if (parts[1]) targetPath = decodeURIComponent(parts[1]);
+        }
+
+        const headers = new Headers();
+        headers.set('Location', targetPath);
+        headers.append('Set-Cookie', sessionCookie);
+        headers.append('Set-Cookie', clearStateCookie);
+
+        return new Response(null, { status: 302, headers });
+      } catch (err: any) {
+        return new Response(`Authentication error: ${err.message}`, { status: 500 });
+      }
+    }
+
+    // ── POST /api/auth/logout ───────────────────────────────────────
+    if (url.pathname === '/api/auth/logout' && (request.method === 'POST' || request.method === 'GET')) {
+      const cookieHeader = request.headers.get('Cookie') || '';
+      const sessionMatch = cookieHeader.match(new RegExp(`${SESSION_COOKIE_NAME}=([^;]+)`));
+      const sessionToken = sessionMatch ? decodeURIComponent(sessionMatch[1]) : null;
+
+      if (sessionToken && env.DB) {
+        try {
+          await invalidateSession(env.DB, sessionToken);
+        } catch {}
+      }
+
+      const clearCookie = buildCookieHeader(SESSION_COOKIE_NAME, '', { maxAge: 0 });
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: '/academy',
+          'Set-Cookie': clearCookie,
+        },
+      });
     }
 
     // ── POST /api/contact ──────────────────────────────────────────

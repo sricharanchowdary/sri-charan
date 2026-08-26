@@ -195,3 +195,26 @@ sequenceDiagram
     end
 ```
 
+---
+
+## 7. Interactive Educational Flow Explorer (`<FlowExplorer />`)
+
+For interactive tutorials and MDX documentation lessons, use the `<FlowExplorer />` component located at [`src/components/FlowExplorer.astro`](file:///c:/Users/sri%20charan/OneDrive/Attachments/Desktop/my%20portfolio/my-portfolio/src/components/FlowExplorer.astro) or [`src/components/FlowExplorer.tsx`](file:///c:/Users/sri%20charan/OneDrive/Attachments/Desktop/my%20portfolio/my-portfolio/src/components/FlowExplorer.tsx).
+
+### MDX / Astro Usage:
+
+```mdx
+import FlowExplorer from '../components/FlowExplorer.astro';
+import { OAUTH_PKCE_FLOW } from '../data/flows';
+
+# Lesson 1: Understanding OAuth 2.0 PKCE
+
+<FlowExplorer
+  id="oauth-pkce"
+  title="OAuth 2.0 PKCE Authorization Flow"
+  steps={OAUTH_PKCE_FLOW}
+  autoPlayInterval={3200}
+/>
+```
+
+

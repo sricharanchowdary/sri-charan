@@ -1,0 +1,791 @@
+---
+export interface FlowStep {
+  stepNumber: number;
+  title: string;
+  sender: string;
+  receiver: string;
+  action: string;
+  explanation: string;
+  codeSnippet?: string;
+  status?: string | number; // e.g. "200 OK", "302 Redirect", "429 Too Many Requests"
+  phase?: string; // e.g. "Ingress", "Verification", "Issuance"
+  category?: 'request' | 'response' | 'internal' | 'security';
+}
+
+export interface Props {
+  id?: string;
+  title?: string;
+  steps: FlowStep[];
+  autoPlayInterval?: number; // in ms, default 3200
+  allowFullscreen?: boolean;
+  allowSound?: boolean;
+  class?: string;
+}
+
+const {
+  id = `flow-${Math.random().toString(36).substring(2, 9)}`,
+  title = 'Interactive Sequence Flow',
+  steps = [],
+  autoPlayInterval = 3200,
+  allowFullscreen = true,
+  allowSound = true,
+  class: className = '',
+} = Astro.props;
+
+// Extract unique participants maintaining appearance order
+const participants: string[] = [];
+steps.forEach((s) => {
+  if (s.sender && !participants.includes(s.sender)) participants.push(s.sender);
+  if (s.receiver && !participants.includes(s.receiver)) participants.push(s.receiver);
+});
+
+// Participant Icon Helper
+const getParticipantIcon = (name: string) => {
+  const lower = name.toLowerCase();
+  if (lower.includes('user') || lower.includes('actor') || lower.includes('human') || lower.includes('attacker')) return '👤';
+  if (lower.includes('browser') || lower.includes('client') || lower.includes('app') || lower.includes('frontend')) return '💻';
+  if (lower.includes('idp') || lower.includes('auth') || lower.includes('identity') || lower.includes('oauth')) return '🔐';
+  if (lower.includes('guardrail') || lower.includes('shield') || lower.includes('security')) return '🛡️';
+  if (lower.includes('server') || lower.includes('api') || lower.includes('backend') || lower.includes('worker')) return '⚙️';
+  if (lower.includes('db') || lower.includes('database') || lower.includes('kv') || lower.includes('store')) return '🗄️';
+  if (lower.includes('edge') || lower.includes('cloudflare') || lower.includes('cdn')) return '☁️';
+  return '📦';
+};
+---
+
+<div
+  class={`flow-explorer group/flow my-8 w-full select-none overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] shadow-2xl transition-all duration-300 ${className}`}
+  id={id}
+  data-autoplay-interval={autoPlayInterval}
+  data-steps={JSON.stringify(steps)}
+  data-participants={JSON.stringify(participants)}
+  data-sound-enabled="false"
+  role="region"
+  aria-label={title}
+>
+  <!-- Top Navigation & Controls Bar -->
+  <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--surface-muted)]/70 px-4 py-3 sm:px-6">
+    <div class="flex items-center gap-3">
+      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)]/15 text-[var(--accent)] ring-1 ring-[var(--accent)]/30">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-bold text-[var(--text)] sm:text-base">{title}</h3>
+          <span class="step-status-badge hidden rounded-md bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20"></span>
+        </div>
+        <p class="step-indicator-label text-xs font-semibold text-[var(--accent)]">
+          Step <span class="current-step-num">1</span> of <span class="total-steps-num">{steps.length}</span>:
+          <span class="current-step-name truncate text-[var(--muted)] font-normal ml-1">
+            {steps[0]?.title || ''}
+          </span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Stepper Navigation Controls -->
+    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+      <!-- Speed selector -->
+      <div class="speed-selector relative hidden sm:flex items-center rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs">
+        <span class="text-[10px] uppercase font-bold text-[var(--muted)] mr-1.5">Speed:</span>
+        <button type="button" class="btn-speed px-1 font-bold text-[var(--accent)] hover:opacity-80" data-speed="1">1x</button>
+      </div>
+
+      <!-- Sound Toggle -->
+      {allowSound && (
+        <button
+          type="button"
+          class="btn-sound flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface-muted)] active:scale-95 cursor-pointer"
+          title="Toggle SFX sound effects"
+          aria-label="Toggle sound effects"
+        >
+          <svg class="sound-icon-off" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+          <svg class="sound-icon-on hidden" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+        </button>
+      )}
+
+      <!-- Export Mermaid -->
+      <button
+        type="button"
+        class="btn-export-mermaid hidden sm:flex h-9 items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 text-xs font-medium text-[var(--muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)] active:scale-95 cursor-pointer"
+        title="Copy sequence diagram as Mermaid format"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 18 22 12 16 6"></polyline>
+          <polyline points="8 6 2 12 8 18"></polyline>
+        </svg>
+        <span class="export-text">Mermaid</span>
+      </button>
+
+      <!-- Reset -->
+      <button
+        type="button"
+        class="btn-reset flex h-9 items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 sm:px-3 text-xs font-medium text-[var(--muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)] active:scale-95 cursor-pointer"
+        title="Reset flow to Step 1"
+        aria-label="Reset sequence flow to step 1"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          <path d="M3 3v5h5"></path>
+        </svg>
+        <span class="hidden sm:inline">Reset</span>
+      </button>
+
+      <!-- Prev -->
+      <button
+        type="button"
+        class="btn-prev flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-muted)] disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 cursor-pointer"
+        title="Previous Step (Left Arrow)"
+        aria-label="Go to previous step"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <!-- Auto Play -->
+      <button
+        type="button"
+        class="btn-autoplay flex h-9 items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3 text-xs font-bold text-white shadow-sm hover:opacity-90 active:scale-95 cursor-pointer"
+        aria-label="Toggle auto-play animation"
+      >
+        <span class="autoplay-icon flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+        </span>
+        <span class="autoplay-text">Auto-play</span>
+      </button>
+
+      <!-- Next -->
+      <button
+        type="button"
+        class="btn-next flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-muted)] disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 cursor-pointer"
+        title="Next Step (Right Arrow)"
+        aria-label="Go to next step"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+
+      <!-- Fullscreen / Presentation Toggle -->
+      {allowFullscreen && (
+        <button
+          type="button"
+          class="btn-fullscreen hidden sm:flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface-muted)] active:scale-95 cursor-pointer"
+          title="Toggle Fullscreen presentation mode"
+        >
+          <svg class="icon-expand" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <polyline points="9 21 3 21 3 15"></polyline>
+            <line x1="21" y1="3" x2="14" y2="10"></line>
+            <line x1="3" y1="21" x2="10" y2="14"></line>
+          </svg>
+        </button>
+      )}
+    </div>
+  </div>
+
+  <!-- Animated Progress Track with Scrubbing Support -->
+  <div class="progress-track relative h-1.5 w-full bg-[var(--surface-muted)] cursor-pointer overflow-hidden">
+    <div class="progress-bar-fill h-full w-0 bg-gradient-to-r from-[var(--accent)] via-indigo-500 to-[var(--accent-hover,var(--accent))] transition-all duration-300 ease-out"></div>
+  </div>
+
+  <!-- Main Canvas: Participant Lanes & Arrow Stage -->
+  <div class="flow-canvas relative px-3 py-6 sm:px-8">
+    <!-- Participant Column Headers -->
+    <div class="participants-grid grid w-full gap-2 text-center" style={`grid-template-columns: repeat(${participants.length}, minmax(0, 1fr));`}>
+      {participants.map((p, idx) => (
+        <div class="participant-node flex flex-col items-center gap-2 cursor-pointer group/node" data-participant-index={idx} data-participant-name={p} title={`Filter steps for ${p}`}>
+          <div class="node-pill flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface-muted)] px-2.5 py-1 text-xs font-bold text-[var(--text)] shadow-sm transition-all duration-300 group-hover/node:border-[var(--accent)] sm:px-4 sm:py-1.5 sm:text-sm">
+            <span class="text-sm sm:text-base">{getParticipantIcon(p)}</span>
+            <span class="truncate max-w-[70px] sm:max-w-[140px]">{p}</span>
+          </div>
+          <!-- Lifeline segment -->
+          <div class="h-4 w-0.5 border-r-2 border-dashed border-[var(--border)]"></div>
+        </div>
+      ))}
+    </div>
+
+    <!-- Active Stage with Dynamic SVG Sequence Path -->
+    <div class="flow-stage relative my-3 flex min-h-[150px] sm:min-h-[175px] w-full items-center justify-center overflow-hidden rounded-2xl border border-[var(--border)]/70 bg-[var(--surface-muted)]/20 px-2 py-4">
+      <!-- Participant Lifelines Background -->
+      <div class="absolute inset-0 grid w-full pointer-events-none" style={`grid-template-columns: repeat(${participants.length}, minmax(0, 1fr));`}>
+        {participants.map(() => (
+          <div class="flex justify-center h-full">
+            <div class="h-full w-0.5 border-r border-dashed border-[var(--border)]/60"></div>
+          </div>
+        ))}
+      </div>
+
+      <!-- Animated SVG Arrows Layer -->
+      <svg class="flow-svg absolute inset-0 h-full w-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id={`${id}-arrow-right`} markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--accent)" />
+          </marker>
+          <marker id={`${id}-arrow-left`} markerWidth="10" markerHeight="10" refX="2" refY="5" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--accent)" />
+          </marker>
+          <linearGradient id={`${id}-grad`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.3" />
+            <stop offset="50%" stop-color="var(--accent)" stop-opacity="1" />
+            <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.3" />
+          </linearGradient>
+          <filter id={`${id}-glow`} x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
+
+        <!-- Standard Horizontal Line Path (sender != receiver) -->
+        <line
+          class="flow-line transition-all duration-300"
+          x1="10%"
+          y1="50%"
+          x2="90%"
+          y2="50%"
+          stroke="var(--accent)"
+          stroke-width="3"
+          marker-end={`url(#${id}-arrow-right)`}
+          stroke-dasharray="6,6"
+        >
+          <animate attributeName="stroke-dashoffset" values="24;0" dur="0.8s" repeatCount="indefinite" />
+        </line>
+
+        <!-- Glowing Traveling Particle on Line -->
+        <circle class="flow-particle hidden" r="4.5" fill="var(--accent)" filter={`url(#${id}-glow)`}>
+          <animate attributeName="opacity" values="0.8;1;0.8" dur="0.8s" repeatCount="indefinite" />
+        </circle>
+
+        <!-- Loopback Curved Path (sender == receiver) -->
+        <path
+          class="flow-loop hidden transition-all duration-300"
+          d=""
+          fill="none"
+          stroke="var(--accent)"
+          stroke-width="3"
+          marker-end={`url(#${id}-arrow-right)`}
+          stroke-dasharray="6,6"
+        >
+          <animate attributeName="stroke-dashoffset" values="24;0" dur="0.8s" repeatCount="indefinite" />
+        </path>
+      </svg>
+
+      <!-- Center Action Badge Floating on the Active Flow -->
+      <div class="action-badge-wrapper z-10 max-w-[94%] sm:max-w-[82%] text-center">
+        <div class="action-badge inline-flex flex-col items-center gap-1 rounded-xl border border-[var(--accent)]/30 bg-[var(--surface)]/95 px-4 py-2.5 shadow-2xl backdrop-blur-md transition-all duration-200">
+          <div class="flex items-center gap-2">
+            <span class="action-direction text-[11px] font-bold tracking-wide uppercase text-[var(--accent)]">
+              Sender &rarr; Receiver
+            </span>
+            <span class="action-phase-tag hidden rounded bg-[var(--surface-muted)] px-1.5 py-0.2 text-[9px] font-semibold text-[var(--muted)]"></span>
+          </div>
+          <code class="action-text font-mono text-xs sm:text-sm font-bold text-[var(--text)] break-all max-w-xs sm:max-w-md">
+            Action Loading...
+          </code>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step Explanation & Code Payload Details Drawer -->
+  <div class="border-t border-[var(--border)] bg-[var(--surface-muted)]/20 p-4 sm:p-6">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <!-- Step Text Description -->
+      <div class="flex-1 space-y-2.5">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="step-tag inline-flex items-center rounded-lg bg-[var(--accent)]/15 px-2.5 py-0.5 text-xs font-bold text-[var(--accent)]">
+            Step 1
+          </span>
+          <h4 class="step-title text-base sm:text-lg font-bold text-[var(--text)]">Title</h4>
+        </div>
+        <p class="step-explanation text-xs sm:text-sm leading-relaxed text-[var(--muted)]">
+          Explanation loading...
+        </p>
+      </div>
+
+      <!-- Code Snippet Box -->
+      <div class="snippet-container w-full lg:max-w-md hidden">
+        <div class="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-md">
+          <div class="flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface-muted)]/70 px-3.5 py-2 text-xs">
+            <div class="flex items-center gap-1.5 font-mono font-bold text-[var(--accent)]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="16 18 22 12 16 6"></polyline>
+                <polyline points="8 6 2 12 8 18"></polyline>
+              </svg>
+              <span>Payload / Wire Format</span>
+            </div>
+            <button
+              type="button"
+              class="btn-copy-snippet flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium text-[var(--muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)] transition-colors cursor-pointer"
+              aria-label="Copy code snippet to clipboard"
+            >
+              <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span class="copy-text">Copy</span>
+            </button>
+          </div>
+          <pre class="snippet-pre max-h-52 overflow-x-auto p-3.5 text-xs font-mono leading-relaxed text-[var(--text)]"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stepper Dots & Timeline Bar -->
+    <div class="step-dots-container mt-6 flex flex-wrap items-center justify-center gap-2">
+      {steps.map((_, i) => (
+        <button
+          type="button"
+          class="step-dot h-2.5 w-2.5 rounded-full bg-[var(--border)] transition-all hover:bg-[var(--accent)]/60 focus:outline-none cursor-pointer"
+          data-step-index={i}
+          aria-label={`Jump to step ${i + 1}`}
+        ></button>
+      ))}
+    </div>
+  </div>
+</div>
+
+<script>
+  // Web Audio Synth for Subtle Educational Cues
+  class FlowSoundFX {
+    ctx: AudioContext | null = null;
+
+    init() {
+      if (!this.ctx && typeof window !== 'undefined') {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) this.ctx = new AudioCtx();
+      }
+      if (this.ctx && this.ctx.state === 'suspended') {
+        this.ctx.resume();
+      }
+    }
+
+    playStepTick() {
+      try {
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(540, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(780, this.ctx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.05);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.05);
+      } catch {}
+    }
+  }
+
+  const sfx = new FlowSoundFX();
+
+  function initializeAdvancedFlowExplorers() {
+    const containers = document.querySelectorAll<HTMLElement>('.flow-explorer');
+
+    containers.forEach((el) => {
+      if (el.dataset.initialized === 'true') return;
+      el.dataset.initialized = 'true';
+
+      const rawSteps = el.dataset.steps;
+      const rawParticipants = el.dataset.participants;
+      let baseInterval = parseInt(el.dataset.autoplayInterval || '3200', 10);
+      let currentSpeed = 1;
+
+      if (!rawSteps || !rawParticipants) return;
+
+      let steps: any[] = [];
+      let participants: string[] = [];
+
+      try {
+        steps = JSON.parse(rawSteps);
+        participants = JSON.parse(rawParticipants);
+      } catch (err) {
+        console.error('Failed to parse FlowExplorer data:', err);
+        return;
+      }
+
+      const totalSteps = steps.length;
+      if (totalSteps === 0) return;
+
+      let currentStepIndex = 0;
+      let autoPlayTimer: number | null = null;
+      let isPlaying = false;
+      let soundEnabled = false;
+
+      // Select elements
+      const currentStepNum = el.querySelector('.current-step-num') as HTMLElement;
+      const currentStepName = el.querySelector('.current-step-name') as HTMLElement;
+      const statusBadge = el.querySelector('.step-status-badge') as HTMLElement;
+      const btnPrev = el.querySelector('.btn-prev') as HTMLButtonElement;
+      const btnNext = el.querySelector('.btn-next') as HTMLButtonElement;
+      const btnReset = el.querySelector('.btn-reset') as HTMLButtonElement;
+      const btnAutoPlay = el.querySelector('.btn-autoplay') as HTMLButtonElement;
+      const autoPlayText = el.querySelector('.autoplay-text') as HTMLElement;
+      const autoPlayIcon = el.querySelector('.autoplay-icon') as HTMLElement;
+      const progressFill = el.querySelector('.progress-bar-fill') as HTMLElement;
+      const progressTrack = el.querySelector('.progress-track') as HTMLElement;
+      const btnSpeed = el.querySelector('.btn-speed') as HTMLButtonElement;
+      const btnSound = el.querySelector('.btn-sound') as HTMLButtonElement;
+      const soundIconOff = el.querySelector('.sound-icon-off') as SVGElement;
+      const soundIconOn = el.querySelector('.sound-icon-on') as SVGElement;
+      const btnFullscreen = el.querySelector('.btn-fullscreen') as HTMLButtonElement;
+      const btnExportMermaid = el.querySelector('.btn-export-mermaid') as HTMLButtonElement;
+      const exportText = el.querySelector('.export-text') as HTMLElement;
+
+      const flowLine = el.querySelector('.flow-line') as SVGLineElement;
+      const flowLoop = el.querySelector('.flow-loop') as SVGPathElement;
+      const actionDirection = el.querySelector('.action-direction') as HTMLElement;
+      const actionText = el.querySelector('.action-text') as HTMLElement;
+      const actionBadge = el.querySelector('.action-badge') as HTMLElement;
+      const actionPhaseTag = el.querySelector('.action-phase-tag') as HTMLElement;
+
+      const stepTag = el.querySelector('.step-tag') as HTMLElement;
+      const stepTitle = el.querySelector('.step-title') as HTMLElement;
+      const stepExplanation = el.querySelector('.step-explanation') as HTMLElement;
+      const snippetContainer = el.querySelector('.snippet-container') as HTMLElement;
+      const snippetPre = el.querySelector('.snippet-pre') as HTMLElement;
+      const btnCopy = el.querySelector('.btn-copy-snippet') as HTMLButtonElement;
+      const copyText = el.querySelector('.copy-text') as HTMLElement;
+
+      const participantNodes = el.querySelectorAll<HTMLElement>('.participant-node');
+      const stepDots = el.querySelectorAll<HTMLElement>('.step-dot');
+
+      function calculatePercentForParticipant(name: string): number {
+        const idx = participants.indexOf(name);
+        if (idx === -1) return 50;
+        const total = participants.length;
+        if (total <= 1) return 50;
+        return ((idx + 0.5) / total) * 100;
+      }
+
+      function renderStep(index: number, playAudio = true) {
+        if (index < 0 || index >= totalSteps) return;
+        currentStepIndex = index;
+        const step = steps[index];
+
+        if (soundEnabled && playAudio) {
+          sfx.playStepTick();
+        }
+
+        // 1. Counter and Step Name
+        if (currentStepNum) currentStepNum.textContent = (index + 1).toString();
+        if (currentStepName) currentStepName.textContent = step.title;
+
+        // 2. Status Badge
+        if (statusBadge) {
+          if (step.status) {
+            statusBadge.textContent = step.status;
+            statusBadge.classList.remove('hidden');
+          } else {
+            statusBadge.classList.add('hidden');
+          }
+        }
+
+        // 3. Progress fill
+        if (progressFill) {
+          const pct = ((index + 1) / totalSteps) * 100;
+          progressFill.style.width = `${pct}%`;
+        }
+
+        // 4. Stepper button states
+        if (btnPrev) btnPrev.disabled = index === 0;
+        if (btnNext) btnNext.disabled = index === totalSteps - 1;
+
+        // 5. Highlight participant nodes
+        participantNodes.forEach((node) => {
+          const pName = node.dataset.participantName;
+          const pill = node.querySelector('.node-pill');
+          if (pill) {
+            const isSender = pName === step.sender;
+            const isReceiver = pName === step.receiver;
+
+            if (isSender || isReceiver) {
+              pill.classList.remove('bg-[var(--surface-muted)]', 'border-[var(--border)]');
+              pill.classList.add('bg-[var(--accent)]', 'text-white', 'border-[var(--accent)]', 'scale-105', 'shadow-lg');
+            } else {
+              pill.classList.remove('bg-[var(--accent)]', 'text-white', 'border-[var(--accent)]', 'scale-105', 'shadow-lg');
+              pill.classList.add('bg-[var(--surface-muted)]', 'border-[var(--border)]');
+            }
+          }
+        });
+
+        // 6. Arrow calculation (Support straight line or self-loop)
+        const isSelfLoop = step.sender === step.receiver;
+        const senderPct = calculatePercentForParticipant(step.sender);
+        const receiverPct = calculatePercentForParticipant(step.receiver);
+
+        if (isSelfLoop) {
+          if (flowLine) flowLine.classList.add('hidden');
+          if (flowLoop) {
+            flowLoop.classList.remove('hidden');
+            const pX = senderPct;
+            flowLoop.setAttribute('d', `M ${pX - 2}% 40% C ${pX + 8}% 10%, ${pX + 8}% 90%, ${pX + 1}% 60%`);
+          }
+        } else {
+          if (flowLoop) flowLoop.classList.add('hidden');
+          if (flowLine) {
+            flowLine.classList.remove('hidden');
+            flowLine.setAttribute('x1', `${senderPct}%`);
+            flowLine.setAttribute('y1', '50%');
+            flowLine.setAttribute('x2', `${receiverPct}%`);
+            flowLine.setAttribute('y2', '50%');
+          }
+        }
+
+        // 7. Action badge
+        if (actionDirection) {
+          actionDirection.textContent = `${step.sender} → ${step.receiver}`;
+        }
+        if (actionPhaseTag) {
+          if (step.phase) {
+            actionPhaseTag.textContent = step.phase;
+            actionPhaseTag.classList.remove('hidden');
+          } else {
+            actionPhaseTag.classList.add('hidden');
+          }
+        }
+        if (actionText) {
+          actionText.textContent = step.action;
+        }
+        if (actionBadge) {
+          actionBadge.classList.add('scale-105');
+          setTimeout(() => actionBadge.classList.remove('scale-105'), 180);
+        }
+
+        // 8. Explanations
+        if (stepTag) stepTag.textContent = `Step ${step.stepNumber || index + 1}`;
+        if (stepTitle) stepTitle.textContent = step.title;
+        if (stepExplanation) stepExplanation.textContent = step.explanation;
+
+        // 9. Code Snippet
+        if (step.codeSnippet && step.codeSnippet.trim()) {
+          snippetContainer?.classList.remove('hidden');
+          if (snippetPre) snippetPre.textContent = step.codeSnippet;
+        } else {
+          snippetContainer?.classList.add('hidden');
+        }
+
+        // 10. Dots
+        stepDots.forEach((dot, dotIdx) => {
+          if (dotIdx === index) {
+            dot.classList.remove('bg-[var(--border)]');
+            dot.classList.add('bg-[var(--accent)]', 'scale-125', 'ring-2', 'ring-[var(--accent)]/30');
+          } else {
+            dot.classList.remove('bg-[var(--accent)]', 'scale-125', 'ring-2', 'ring-[var(--accent)]/30');
+            dot.classList.add('bg-[var(--border)]');
+          }
+        });
+      }
+
+      function stopAutoPlay() {
+        if (autoPlayTimer !== null) {
+          clearInterval(autoPlayTimer);
+          autoPlayTimer = null;
+        }
+        isPlaying = false;
+        if (autoPlayText) autoPlayText.textContent = 'Auto-play';
+        if (autoPlayIcon) {
+          autoPlayIcon.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          `;
+        }
+      }
+
+      function startAutoPlay() {
+        stopAutoPlay();
+        isPlaying = true;
+        if (autoPlayText) autoPlayText.textContent = 'Pause';
+        if (autoPlayIcon) {
+          autoPlayIcon.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="6" y="4" width="4" height="16"></rect>
+              <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>
+          `;
+        }
+
+        const interval = baseInterval / currentSpeed;
+        autoPlayTimer = window.setInterval(() => {
+          if (currentStepIndex >= totalSteps - 1) {
+            renderStep(0);
+          } else {
+            renderStep(currentStepIndex + 1);
+          }
+        }, interval);
+      }
+
+      // Event Handlers
+      btnPrev?.addEventListener('click', () => {
+        stopAutoPlay();
+        if (currentStepIndex > 0) renderStep(currentStepIndex - 1);
+      });
+
+      btnNext?.addEventListener('click', () => {
+        stopAutoPlay();
+        if (currentStepIndex < totalSteps - 1) renderStep(currentStepIndex + 1);
+      });
+
+      btnReset?.addEventListener('click', () => {
+        stopAutoPlay();
+        renderStep(0);
+      });
+
+      btnAutoPlay?.addEventListener('click', () => {
+        if (isPlaying) {
+          stopAutoPlay();
+        } else {
+          startAutoPlay();
+        }
+      });
+
+      // Speed selector toggling: 1x -> 1.5x -> 2x -> 0.5x -> 1x
+      btnSpeed?.addEventListener('click', () => {
+        if (currentSpeed === 1) currentSpeed = 1.5;
+        else if (currentSpeed === 1.5) currentSpeed = 2;
+        else if (currentSpeed === 2) currentSpeed = 0.5;
+        else currentSpeed = 1;
+
+        btnSpeed.textContent = `${currentSpeed}x`;
+        if (isPlaying) startAutoPlay();
+      });
+
+      // Sound toggle
+      btnSound?.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        if (soundEnabled) {
+          sfx.init();
+          soundIconOff?.classList.add('hidden');
+          soundIconOn?.classList.remove('hidden');
+        } else {
+          soundIconOff?.classList.remove('hidden');
+          soundIconOn?.classList.add('hidden');
+        }
+      });
+
+      // Fullscreen presentation mode
+      btnFullscreen?.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          el.requestFullscreen?.().catch(() => {});
+        } else {
+          document.exitFullscreen?.().catch(() => {});
+        }
+      });
+
+      // Export as Mermaid format
+      btnExportMermaid?.addEventListener('click', () => {
+        let mermaidStr = 'sequenceDiagram\n';
+        participants.forEach((p) => {
+          const safeId = p.replace(/[^a-zA-Z0-9]/g, '_');
+          mermaidStr += `    participant ${safeId} as ${p}\n`;
+        });
+        steps.forEach((s) => {
+          const sId = s.sender.replace(/[^a-zA-Z0-9]/g, '_');
+          const rId = s.receiver.replace(/[^a-zA-Z0-9]/g, '_');
+          mermaidStr += `    ${sId}->>${rId}: ${s.action}\n`;
+        });
+
+        navigator.clipboard.writeText(mermaidStr).then(() => {
+          if (exportText) exportText.textContent = 'Copied!';
+          setTimeout(() => {
+            if (exportText) exportText.textContent = 'Mermaid';
+          }, 1800);
+        });
+      });
+
+      // Scrubbing progress track click
+      progressTrack?.addEventListener('click', (e) => {
+        stopAutoPlay();
+        const rect = progressTrack.getBoundingClientRect();
+        const clickX = (e as MouseEvent).clientX - rect.left;
+        const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+        const targetStep = Math.min(totalSteps - 1, Math.floor(ratio * totalSteps));
+        renderStep(targetStep);
+      });
+
+      // Step dots
+      stepDots.forEach((dot, dotIdx) => {
+        dot.addEventListener('click', () => {
+          stopAutoPlay();
+          renderStep(dotIdx);
+        });
+      });
+
+      // Participant node filter click
+      participantNodes.forEach((node) => {
+        node.addEventListener('click', () => {
+          const pName = node.dataset.participantName;
+          if (!pName) return;
+          const nextMatchingStep = steps.findIndex(
+            (s, i) => i > currentStepIndex && (s.sender === pName || s.receiver === pName)
+          );
+          if (nextMatchingStep !== -1) {
+            stopAutoPlay();
+            renderStep(nextMatchingStep);
+          } else {
+            const firstMatchingStep = steps.findIndex((s) => s.sender === pName || s.receiver === pName);
+            if (firstMatchingStep !== -1) {
+              stopAutoPlay();
+              renderStep(firstMatchingStep);
+            }
+          }
+        });
+      });
+
+      // Copy Snippet
+      btnCopy?.addEventListener('click', () => {
+        if (snippetPre && snippetPre.textContent) {
+          navigator.clipboard.writeText(snippetPre.textContent).then(() => {
+            if (copyText) copyText.textContent = 'Copied!';
+            setTimeout(() => {
+              if (copyText) copyText.textContent = 'Copy';
+            }, 1800);
+          });
+        }
+      });
+
+      // Keyboard arrow keys
+      el.setAttribute('tabindex', '0');
+      el.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key === 'ArrowLeft') {
+          stopAutoPlay();
+          if (currentStepIndex > 0) renderStep(currentStepIndex - 1);
+        } else if (e.key === 'ArrowRight') {
+          stopAutoPlay();
+          if (currentStepIndex < totalSteps - 1) renderStep(currentStepIndex + 1);
+        } else if (e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault();
+          if (isPlaying) stopAutoPlay();
+          else startAutoPlay();
+        }
+      });
+
+      // Initial Render without triggering audio
+      renderStep(0, false);
+    });
+  }
+
+  // Astro page transitions & standard DOM lifecycle hooks
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeAdvancedFlowExplorers);
+  } else {
+    initializeAdvancedFlowExplorers();
+  }
+  document.addEventListener('astro:page-load', initializeAdvancedFlowExplorers);
+</script>
